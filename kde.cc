@@ -74,6 +74,7 @@ void ColorChannelKDE(const uint8_t* data,
       xis.push_back(data[i]);
     }
   }
+  LOG(INFO) << "xis size : " << xis.size();
   vector<float> weights(xis.size(), 1/(float)xis.size());
   vector<float> targets;
   for (int i = 0; i < 255; ++i) {

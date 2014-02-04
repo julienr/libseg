@@ -4,6 +4,7 @@
 
 #include <glog/logging.h>
 
+#include <opencv2/contrib/contrib.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
@@ -38,6 +39,22 @@ void ShowImage(const cv::Mat& img,
   }
 }
 
+// Similar to matlab's imagesc
+template<class T>
+void ImageSC(const cv::Mat& img,
+             const std::string& window_name,
+             bool wait_for_esc=true) {
+  float Amin = *min_element(img.begin<T>(), img.end<T>());
+  float Amax = *max_element(img.begin<T>(), img.end<T>());
+  LOG(INFO) << "[ImageSC] min = " << Amin << ", max = " << Amax;
+  cv::Mat A_scaled = (img - Amin)/(Amax - Amin);
+  //LOG(INFO) << "A_scaled max : " << *max_element(A_scaled.begin<T>(), A_scaled.end<T>());
+  cv::Mat display;
+  A_scaled.convertTo(display, CV_8UC1, 255.0, 0);
+  cv::applyColorMap(display, display, cv::COLORMAP_JET);
+  ShowImage(display, window_name, wait_for_esc);
+}
+
 void SaveVector(const string& filename, const vector<float>& v) {
   fstream f(filename.c_str(), fstream::out);
   for (size_t i = 0; i < v.size(); ++i) {
@@ -49,7 +66,7 @@ void SaveVector(const string& filename, const vector<float>& v) {
 // Saves foreground and background density estimation to fname
 // channels should be an array of 3 uint8_t W*H array containing channel data
 // Those can then be displayed using the plot_densities.py script
-void SaveForegroundBackgroundDensities(uint8_t** channels,
+void SaveForegroundBackgroundDensities(const uint8_t** channels,
                                        const uint8_t* fg,
                                        const uint8_t* bg,
                                        int W,
@@ -74,6 +91,27 @@ void SaveForegroundBackgroundDensities(uint8_t** channels,
     }
   }
   f.close();
+}
+
+// outimg should be a W*H image
+void ImageProbability(const uint8_t** channels,
+                      const uint8_t* mask,
+                      int W,
+                      int H,
+                      double* outimg) {
+  vector<vector<float>> probs(3);
+  for (int i = 0; i < 3; ++i) {
+    ColorChannelKDE(channels[i], mask, W, H, true, &probs[i]);
+  }
+
+  for (int i = 0; i < W*H; ++i) {
+    // TODO: We get really low probability values (< 1e-05). We might
+    // want to apply some scaling to avoid numerical problems
+    const float prob = probs[0][channels[0][i]]
+                     * probs[1][channels[1][i]]
+                     * probs[2][channels[2][i]];
+    outimg[i] = prob;
+  }
 }
 
 int main(int argc, char** argv) {
@@ -129,16 +167,24 @@ int main(int argc, char** argv) {
     scribble_bg.copyTo(bg_mat);
   }
 
+
+  const uint8_t* channels[3] = {lab_l.get(), lab_a.get(), lab_b.get()};
   // Export densities for plot_densities.py script
-  if (true) {
-    uint8_t* channels[3] = {lab_l.get(), lab_a.get(), lab_b.get()};
+  if (false) {
     SaveForegroundBackgroundDensities(channels, fg.get(), bg.get(), W, H,
         false, "densities_nomedfilter.txt");
     SaveForegroundBackgroundDensities(channels, fg.get(), bg.get(), W, H,
         true, "densities_medfilter.txt");
   }
 
-  ShowImage(lab[0], "lab[0]", true);
+  scoped_array<double> fg_prob(new double[W*H]);
+  cv::Mat fg_prob_mat(H, W, CV_64F, fg_prob.get());
+  ImageProbability(channels, fg.get(), W, H, fg_prob.get());
+
+  //ShowImage(fg_prob_mat, "fg_prob", true);
+  ImageSC<double>(fg_prob_mat, "fg_prob", true);
+
+  //ShowImage(lab[0], "lab[0]", true);
 
   //ShowImage(img_lab, "img_lab", false);
   //ShowImage(scribble_fg, "scribble fg", false);
