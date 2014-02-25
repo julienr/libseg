@@ -1,0 +1,7 @@
+third_party/figtree-0.9.3*
+third_party/gmock-1.7.0*
+*.png
+*.txt
+core
+data
+out

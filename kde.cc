@@ -4,12 +4,14 @@
 
 #include <glog/logging.h>
 
+#include <figtree.h>
+
 using namespace std;
 
-const float NORMAL_FACTOR = 1/(float)sqrt(2*M_PI);
+const double NORMAL_FACTOR = 1/(double)sqrt(2*M_PI);
 
-float GaussianKernel(float t, float xi, float h) {
-  const float x = (t - xi) / h;
+double GaussianKernel(double t, double xi, double h) {
+  const double x = (t - xi) / h;
   // TODO: We have to remove NORMAL_FACTOR so that is sums to 1
   // (see plot_densities.py). Is that normal ?
 
@@ -21,23 +23,53 @@ float GaussianKernel(float t, float xi, float h) {
 //   h = n**(-1./(d+4))
 // where n is the number of data points, d the number of dimensions
 // http://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gaussian_kde.html
-float EstimateBandwidth(int ndata, int ndims) {
-  return pow(ndata, -1/(float)(ndims + 4));
+double EstimateBandwidth(int ndata, int ndims) {
+  return pow(ndata, -1/(double)(ndims + 4));
 }
 
-void UnivariateKDE(const vector<float>& xis,
-                   const vector<float>& weights,
-                   const vector<float>& targets,
-                   vector<float>* target_prob) {
-  const float h = EstimateBandwidth(xis.size(), 1);
+void UnivariateKDE(const vector<double>& xis,
+                   const vector<double>& weights,
+                   const vector<double>& targets,
+                   vector<double>* target_prob) {
+  CHECK_EQ(xis.size(), weights.size());
+  const double h = EstimateBandwidth(xis.size(), 1);
   LOG(INFO) << "h : " << h;
   for (size_t ti = 0; ti < targets.size(); ++ti) {
-    float prob = 0;
+    double prob = 0;
     for (size_t i = 0; i < xis.size(); ++i) {
       prob += weights[i] * GaussianKernel(targets[ti], xis[i], h);
     }
     target_prob->push_back(prob);
   }
+}
+
+void FastUnivariateKDE(const std::vector<double>& xis,
+                       const std::vector<double>& weights,
+                       const std::vector<double>& targets,
+                       std::vector<double>* target_prob,
+                       double epsilon) {
+  // Figtree's h is not exactly the same as standard deviation :
+  // (from figtree sample.cpp)
+  // The bandwidth.  NOTE: this is not the same as standard deviation since
+  // the Gauss Transform sums terms exp( -||x_i - y_j||^2 / h^2 ) as opposed
+  // to  exp( -||x_i - y_j||^2 / (2*sigma^2) ).  Thus, if sigma is known,
+  // bandwidth can be set to h = sqrt(2)*sigma.
+  const double h = sqrt(2) * EstimateBandwidth(xis.size(), 1);
+  LOG(INFO) << "h : " << h;
+  const int d = 1;
+  const int N = xis.size();
+  const int M = targets.size();
+  const int W = 1;
+
+  target_prob->resize(M);
+
+  figtree(d, N, M, W,
+          const_cast<double*>(xis.data()),
+          h,
+          const_cast<double*>(weights.data()),
+          const_cast<double*>(targets.data()),
+          epsilon,
+          target_prob->data());
 }
 
 // Return the median of the elements in v. Note that v WILL be modified
@@ -51,14 +83,14 @@ T Median(vector<T>* v) {
   return v->at(n);
 }
 
-void MedianFilter(const vector<float>& v,
+void MedianFilter(const vector<double>& v,
                   size_t hwsize, // half window size
-                  vector<float>* vfilt) {
+                  vector<double>* vfilt) {
   for (size_t i = 0; i < v.size(); ++i) {
     const size_t wstart = max<size_t>(0, i - hwsize);
     const size_t wend = min<size_t>(v.size() - 1, i + hwsize);
-    vector<float> window(v.begin() + wstart, v.begin() + wend);
-    vfilt->push_back(Median<float>(&window));
+    vector<double> window(v.begin() + wstart, v.begin() + wend);
+    vfilt->push_back(Median<double>(&window));
   }
 }
 
@@ -67,23 +99,24 @@ void ColorChannelKDE(const uint8_t* data,
                      int W,
                      int H,
                      bool median_filter,
-                     std::vector<float>* target_prob) {
-  vector<float> xis;
+                     std::vector<double>* target_prob) {
+  vector<double> xis;
   for (int i = 0; i < W*H; ++i) {
     if (mask[i]) {
       xis.push_back(data[i]);
     }
   }
   LOG(INFO) << "xis size : " << xis.size();
-  vector<float> weights(xis.size(), 1/(float)xis.size());
-  vector<float> targets;
+  vector<double> weights(xis.size(), 1/(double)xis.size());
+  vector<double> targets;
   for (int i = 0; i < 255; ++i) {
     targets.push_back(i);
   }
-  UnivariateKDE(xis, weights, targets, target_prob);
+  //UnivariateKDE(xis, weights, targets, target_prob);
+  FastUnivariateKDE(xis, weights, targets, target_prob);
 
   if (median_filter) {
-    vector<float> medfilt;
+    vector<double> medfilt;
     MedianFilter(*target_prob, 5, &medfilt);
     *target_prob = medfilt;
   }

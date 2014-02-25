@@ -74,7 +74,7 @@ void SaveForegroundBackgroundDensities(const uint8_t** channels,
                                        bool median_filter,
                                        const string& fname) {
   // For each channel, foreground and background probabilities
-  vector<vector<float>> fg_prob(3), bg_prob(3);
+  vector<vector<double>> fg_prob(3), bg_prob(3);
   for (int i = 0; i < 3; ++i) {
     ColorChannelKDE(channels[i], fg, W, H, median_filter, &fg_prob[i]);
     ColorChannelKDE(channels[i], bg, W, H, median_filter, &bg_prob[i]);
@@ -83,7 +83,7 @@ void SaveForegroundBackgroundDensities(const uint8_t** channels,
   fstream f(fname.c_str(), fstream::out);
   for (int c = 0; c < 3; ++c) {
     for (int k = 0; k < 2; ++k) { // k == 0 => fg, k == 1 => bg
-      const vector<float>& v = (k == 0) ? fg_prob[c] : bg_prob[c];
+      const vector<double>& v = (k == 0) ? fg_prob[c] : bg_prob[c];
       for (size_t i = 0; i < v.size(); ++i) {
         f << v[i] << "\t";
       }
@@ -99,7 +99,7 @@ void ImageProbability(const uint8_t** channels,
                       int W,
                       int H,
                       double* outimg) {
-  vector<vector<float>> probs(3);
+  vector<vector<double>> probs(3);
   for (int i = 0; i < 3; ++i) {
     ColorChannelKDE(channels[i], mask, W, H, true, &probs[i]);
   }
@@ -107,9 +107,9 @@ void ImageProbability(const uint8_t** channels,
   for (int i = 0; i < W*H; ++i) {
     // TODO: We get really low probability values (< 1e-05). We might
     // want to apply some scaling to avoid numerical problems
-    const float prob = probs[0][channels[0][i]]
-                     * probs[1][channels[1][i]]
-                     * probs[2][channels[2][i]];
+    const double prob = probs[0][channels[0][i]]
+                      * probs[1][channels[1][i]]
+                      * probs[2][channels[2][i]];
     outimg[i] = prob;
   }
 }

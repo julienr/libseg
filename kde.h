@@ -18,10 +18,22 @@
 // Where K is a gaussian kernel and t is the target. w_i is the weight
 //
 // The KDE bandwidth is estimated automatically using a rule-of-thumb
-void UnivariateKDE(const std::vector<float>& xis,
-                   const std::vector<float>& weights,
-                   const std::vector<float>& targets,
-                   std::vector<float>* target_prob);
+void UnivariateKDE(const std::vector<double>& xis,
+                   const std::vector<double>& weights,
+                   const std::vector<double>& targets,
+                   std::vector<double>* target_prob);
+
+// Uses the figtree library to compute fast KDE with the help of the
+// Gauss transform
+// epsilon is the desired maximum absolute error after normalizing output
+// by sum of weights.
+// If the weights, q_i (see below), add up to 1, then this is will be the
+// maximum absolute error.
+void FastUnivariateKDE(const std::vector<double>& xis,
+                       const std::vector<double>& weights,
+                       const std::vector<double>& targets,
+                       std::vector<double>* target_prob,
+                       double epsilon=1e-2);
 
 // Helper function to compute KDE on a single color channel for values of
 // x in the [0, 255] interval.
@@ -33,6 +45,6 @@ void ColorChannelKDE(const uint8_t* data,
                      int W,
                      int H,
                      bool median_filter,
-                     std::vector<float>* target_prob);
+                     std::vector<double>* target_prob);
 
 #endif
