@@ -5,7 +5,8 @@
 
   'target_defaults': {
     'cflags':[
-      '-Wall', '-Wextra', '-Wno-unused', '-Werror', '-std=c++11'
+      '-Wall', '-Wextra', '-Wno-unused', '-Werror', '-std=c++11',
+      '-ggdb'
     ],
     'libraries':[
       # TODO: Remove dependency on volumit's glog
@@ -54,7 +55,8 @@
       'target_name' : 'libmatting',
       'type': 'static_library',
       'sources':[
-        'kde.cc'
+        'kde.cc',
+        'geodesic.cc',
       ],
       'include_dirs':[
         'third_party/figtree-0.9.3/include/',
@@ -89,6 +91,7 @@
       'type' : 'executable',
       'sources':[
         'kde_test.cc',
+        'geodesic_test.cc',
       ],
       'dependencies' : [
         'gtest_mock',
