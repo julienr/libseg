@@ -121,9 +121,11 @@ void ImageProbability(const uint8_t** channels,
   }
 
   // normalize
-  for (int i = 0; i < W*H; ++i) {
-    outimg[i] /= prob_max;
-  }
+  // TODO: We shouldn't normalize here, because this will result in different
+  // scaling for fg and bg probabilities
+  //for (int i = 0; i < W*H; ++i) {
+    //outimg[i] /= prob_max;
+  //}
 }
 
 int main(int argc, char** argv) {
@@ -200,7 +202,7 @@ int main(int argc, char** argv) {
   // Caution : at first, it might seem bg_prob = 1 - fg, but this is not
   // the case
   ImageProbability(channels, bg.get(), W, H, bg_prob.get());
-
+  // TODO: Need to apply bayes' rule (eq. 1 of paper) !
 
   ImageSC<double>(fg_prob_mat, "fg_prob", false);
   ImageSC<double>(bg_prob_mat, "bg_prob", false);
@@ -219,6 +221,10 @@ int main(int argc, char** argv) {
   ImageSC<double>(fg_dist_mat, "fg_dist", false);
   ImageSC<double>(bg_dist_mat, "bg_dist", false);
 
+  // Segmentation
+  cv::Mat fgmask = fg_dist_mat < bg_dist_mat;
+  CHECK_EQ(fgmask.type(), CV_8U);
+  ImageSC<uint8_t>(fgmask, "fgmask", false);
 
   //ShowImage(lab[0], "lab[0]", true);
 
