@@ -15,6 +15,7 @@ for densfile in ['densities_nomedfilter.txt', 'densities_medfilter.txt']:
         p_bg = densities[2*c + 1]
         pl.plot(np.arange(255), p_fg, c='b', label='fg')
         pl.plot(np.arange(255), p_bg, c='g', label='bg')
+        pl.legend()
         print 'sum(p_fg) : ', np.sum(p_fg)
         print 'sum(p_bg) : ', np.sum(p_bg)
 pl.show()

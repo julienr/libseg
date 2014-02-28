@@ -14,6 +14,7 @@
 #include <boost/scoped_array.hpp>
 
 #include "kde.h"
+#include "geodesic.h"
 
 using boost::scoped_ptr;
 using boost::scoped_array;
@@ -104,13 +105,24 @@ void ImageProbability(const uint8_t** channels,
     ColorChannelKDE(channels[i], mask, W, H, true, &probs[i]);
   }
 
+  double prob_max = numeric_limits<double>::min();
   for (int i = 0; i < W*H; ++i) {
-    // TODO: We get really low probability values (< 1e-05). We might
-    // want to apply some scaling to avoid numerical problems
-    const double prob = probs[0][channels[0][i]]
-                      * probs[1][channels[1][i]]
-                      * probs[2][channels[2][i]];
+    // The probabilities at a given value are very low (< 0.030), which is
+    // mathematically correct (we have 255 such values and they sum to 1), but
+    // can be problematic numerically. So we scale them by a factor of 10
+    // and then normalize the whole probability image to 0, 1
+    const double prob = 10*probs[0][channels[0][i]]
+                      * 10*probs[1][channels[1][i]]
+                      * 10*probs[2][channels[2][i]];
     outimg[i] = prob;
+    if (prob > prob_max) {
+      prob_max = prob;
+    }
+  }
+
+  // normalize
+  for (int i = 0; i < W*H; ++i) {
+    outimg[i] /= prob_max;
   }
 }
 
@@ -177,17 +189,39 @@ int main(int argc, char** argv) {
         true, "densities_medfilter.txt");
   }
 
-  scoped_array<double> fg_prob(new double[W*H]);
-  cv::Mat fg_prob_mat(H, W, CV_64F, fg_prob.get());
-  ImageProbability(channels, fg.get(), W, H, fg_prob.get());
+  ShowImage(scribble_fg, "scribble fg", false);
+  ShowImage(scribble_bg, "scribble bg", false);
 
-  //ShowImage(fg_prob_mat, "fg_prob", true);
-  ImageSC<double>(fg_prob_mat, "fg_prob", true);
+  scoped_array<double> fg_prob(new double[W*H]);
+  scoped_array<double> bg_prob(new double[W*H]);
+  cv::Mat fg_prob_mat(H, W, CV_64F, fg_prob.get());
+  cv::Mat bg_prob_mat(H, W, CV_64F, bg_prob.get());
+  ImageProbability(channels, fg.get(), W, H, fg_prob.get());
+  // Caution : at first, it might seem bg_prob = 1 - fg, but this is not
+  // the case
+  ImageProbability(channels, bg.get(), W, H, bg_prob.get());
+
+
+  ImageSC<double>(fg_prob_mat, "fg_prob", false);
+  ImageSC<double>(bg_prob_mat, "bg_prob", false);
+
+  // Distance maps
+  scoped_array<double> fg_dist(new double[W*H]);
+  scoped_array<double> bg_dist(new double[W*H]);
+  cv::Mat fg_dist_mat(H, W, CV_64F, fg_dist.get());
+  cv::Mat bg_dist_mat(H, W, CV_64F, bg_dist.get());
+  CHECK(scribble_fg.isContinuous());
+  CHECK(scribble_bg.isContinuous());
+  GeodesicDistanceMap(scribble_fg.ptr<uint8_t>(0), fg_prob.get(), W, H,
+                      fg_dist.get());
+  GeodesicDistanceMap(scribble_bg.ptr<uint8_t>(0), bg_prob.get(), W, H,
+                      bg_dist.get());
+  ImageSC<double>(fg_dist_mat, "fg_dist", false);
+  ImageSC<double>(bg_dist_mat, "bg_dist", false);
+
 
   //ShowImage(lab[0], "lab[0]", true);
 
-  //ShowImage(img_lab, "img_lab", false);
-  //ShowImage(scribble_fg, "scribble fg", false);
-  //ShowImage(scribble_bg, "scribble bg", true);
+  ShowImage(img, "image", true);
   return 0;
 }
