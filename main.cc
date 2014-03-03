@@ -94,12 +94,15 @@ void SaveForegroundBackgroundDensities(const uint8_t** channels,
   f.close();
 }
 
-// outimg should be a W*H image
-void ImageProbability(const uint8_t** channels,
-                      const uint8_t* mask,
-                      int W,
-                      int H,
-                      double* outimg) {
+// Computes P(c_x | M) where M is background/foreground estimated by KDE from
+// the mask. c_x is a pixel.
+//
+// outimg should be a user-allocated W*H image
+void ImageColorPDF(const uint8_t** channels,
+                   const uint8_t* mask,
+                   int W,
+                   int H,
+                   double* outimg) {
   vector<vector<double>> probs(3);
   for (int i = 0; i < 3; ++i) {
     ColorChannelKDE(channels[i], mask, W, H, true, &probs[i]);
@@ -126,6 +129,20 @@ void ImageProbability(const uint8_t** channels,
   //for (int i = 0; i < W*H; ++i) {
     //outimg[i] /= prob_max;
   //}
+}
+
+// Equation 1. of Bai09 :
+// P_F(cx) = P(cx|F) / (P(cx|F) + P(cx|B))
+//
+// likelihood should be a user-allocated W*H image
+void ForegroundLikelihood(const double* P_cx_F,
+                          const double* P_cx_B,
+                          int W,
+                          int H,
+                          double* likelihood) {
+  for (int i = 0; i < W*H; ++i) {
+    likelihood[i] = P_cx_F[i] / (P_cx_F[i] + P_cx_B[i]);
+  }
 }
 
 int main(int argc, char** argv) {
@@ -194,15 +211,21 @@ int main(int argc, char** argv) {
   ShowImage(scribble_fg, "scribble fg", false);
   ShowImage(scribble_bg, "scribble bg", false);
 
+  // Color PDF
+  scoped_array<double> fg_pdf(new double[W*H]);
+  scoped_array<double> bg_pdf(new double[W*H]);
+  ImageColorPDF(channels, fg.get(), W, H, fg_pdf.get());
+  // Caution : at first, it might seem bg_pdf = 1 - fg_pdf, but this is not
+  // the case
+  ImageColorPDF(channels, bg.get(), W, H, bg_pdf.get());
+
+  // Foreground/Background likelihood
   scoped_array<double> fg_prob(new double[W*H]);
   scoped_array<double> bg_prob(new double[W*H]);
   cv::Mat fg_prob_mat(H, W, CV_64F, fg_prob.get());
   cv::Mat bg_prob_mat(H, W, CV_64F, bg_prob.get());
-  ImageProbability(channels, fg.get(), W, H, fg_prob.get());
-  // Caution : at first, it might seem bg_prob = 1 - fg, but this is not
-  // the case
-  ImageProbability(channels, bg.get(), W, H, bg_prob.get());
-  // TODO: Need to apply bayes' rule (eq. 1 of paper) !
+  ForegroundLikelihood(fg_pdf.get(), bg_pdf.get(), H, W, fg_prob.get());
+  ForegroundLikelihood(bg_pdf.get(), fg_pdf.get(), H, W, bg_prob.get());
 
   ImageSC<double>(fg_prob_mat, "fg_prob", false);
   ImageSC<double>(bg_prob_mat, "bg_prob", false);
