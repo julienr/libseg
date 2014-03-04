@@ -154,22 +154,25 @@ void ForegroundLikelihood(const double* P_cx_F,
 }
 
 int main(int argc, char** argv) {
+  //const string imgname = "GT18";
+  const string imgname = "GT06";
+
   // Load input image
   cv::Mat img = cv::imread(
-      "data/alphamatting.com/input_training_lowres/GT18.png",
+      "data/alphamatting.com/input_training_lowres/" + imgname + ".png",
       CV_LOAD_IMAGE_COLOR);
   CHECK(img.data);
 
   // Load scribbles and binarize them such that pixels drawn by the user
   // have a value of 255
   cv::Mat scribble_fg = cv::imread(
-      "data/alphamatting.com/GT18_FG.png",
+      "data/alphamatting.com/" + imgname + "_FG.png",
       CV_LOAD_IMAGE_GRAYSCALE);
   CHECK(scribble_fg.data);
   cv::threshold(scribble_fg, scribble_fg, 1, 255, cv::THRESH_BINARY_INV);
 
   cv::Mat scribble_bg = cv::imread(
-      "data/alphamatting.com/GT18_BG.png",
+      "data/alphamatting.com/" + imgname + "_BG.png",
       CV_LOAD_IMAGE_GRAYSCALE);
   CHECK(scribble_bg.data);
   cv::threshold(scribble_bg, scribble_bg, 1, 255, cv::THRESH_BINARY_INV);
@@ -261,6 +264,9 @@ int main(int argc, char** argv) {
 
   //ShowImage(lab[0], "lab[0]", true);
 
+  cv::Mat result;
+  img.copyTo(result, fgmask);
+  ShowImage(result, "result", false);
   ShowImage(img, "image", true);
   return 0;
 }
