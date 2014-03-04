@@ -6,6 +6,7 @@
   'target_defaults': {
     'cflags':[
       '-Wall', '-Wextra', '-Wno-unused', '-Werror', '-std=c++11',
+      #'-O2',
       '-ggdb'
     ],
     'libraries':[

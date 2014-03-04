@@ -1,6 +1,7 @@
 #include "kde.h"
 #include <cmath>
 #include <algorithm>
+#include <iostream>
 
 #include <glog/logging.h>
 
@@ -87,8 +88,8 @@ void MedianFilter(const vector<double>& v,
                   size_t hwsize, // half window size
                   vector<double>* vfilt) {
   for (size_t i = 0; i < v.size(); ++i) {
-    const size_t wstart = max<size_t>(0, i - hwsize);
-    const size_t wend = min<size_t>(v.size() - 1, i + hwsize);
+    const int wstart = max<int>(0, i - hwsize);
+    const int wend = min<int>(v.size() - 1, i + hwsize);
     vector<double> window(v.begin() + wstart, v.begin() + wend);
     vfilt->push_back(Median<double>(&window));
   }

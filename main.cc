@@ -13,6 +13,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/scoped_array.hpp>
 
+#include "utils.h"
 #include "kde.h"
 #include "geodesic.h"
 
@@ -47,7 +48,8 @@ void ImageSC(const cv::Mat& img,
              bool wait_for_esc=true) {
   float Amin = *min_element(img.begin<T>(), img.end<T>());
   float Amax = *max_element(img.begin<T>(), img.end<T>());
-  LOG(INFO) << "[ImageSC] min = " << Amin << ", max = " << Amax;
+  LOG(INFO) << "[ImageSC " << window_name << "] min = " << Amin
+            << ", max = " << Amax;
   cv::Mat A_scaled = (img - Amin)/(Amax - Amin);
   //LOG(INFO) << "A_scaled max : " << *max_element(A_scaled.begin<T>(), A_scaled.end<T>());
   cv::Mat display;
@@ -141,7 +143,13 @@ void ForegroundLikelihood(const double* P_cx_F,
                           int H,
                           double* likelihood) {
   for (int i = 0; i < W*H; ++i) {
-    likelihood[i] = P_cx_F[i] / (P_cx_F[i] + P_cx_B[i]);
+    // Avoid division by zero
+    if (P_cx_F[i] == 0 && P_cx_B[i] == 0) {
+      // If P(cx|B) = 0, we have P(cx|F) / (P(cx|F), so set to 1
+      likelihood[i] = 1;
+    } else {
+      likelihood[i] = P_cx_F[i] / (P_cx_F[i] + P_cx_B[i]);
+    }
   }
 }
 
@@ -177,6 +185,8 @@ int main(int argc, char** argv) {
   CHECK_EQ(scribble_bg.cols, W);
   CHECK_EQ(scribble_bg.rows, H);
 
+  LOG(INFO) << "W = " << W << ", H = " << H;
+
   // Note: OpenCV's Mat uses row major storage
   vector<cv::Mat> lab;
   scoped_array<uint8_t> lab_l(new uint8_t[W*H]);
@@ -197,7 +207,6 @@ int main(int argc, char** argv) {
     cv::Mat bg_mat(H, W, CV_8U, bg.get());
     scribble_bg.copyTo(bg_mat);
   }
-
 
   const uint8_t* channels[3] = {lab_l.get(), lab_a.get(), lab_b.get()};
   // Export densities for plot_densities.py script
@@ -229,6 +238,7 @@ int main(int argc, char** argv) {
 
   ImageSC<double>(fg_prob_mat, "fg_prob", false);
   ImageSC<double>(bg_prob_mat, "bg_prob", false);
+
 
   // Distance maps
   scoped_array<double> fg_dist(new double[W*H]);

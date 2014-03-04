@@ -5,6 +5,7 @@
 #include <limits>
 #include <iostream>
 #include <string.h>
+#include <unordered_map>
 
 using namespace std;
 
@@ -37,9 +38,6 @@ void GeodesicDistanceMap(const uint8_t* source_mask,
   for (int i = 0; i < N; ++i) {
     if (source_mask[i]) {
       dists[i] = 0;
-      //const int x = i % W;
-      //const int y = i / W;
-      //cout << "source at : " << x << ", " << y << endl;
       Q.push(make_pair(i, 0));
     } else {
       dists[i] = numeric_limits<double>::max();
@@ -55,7 +53,6 @@ void GeodesicDistanceMap(const uint8_t* source_mask,
     int u = Q.top().first;
     const int ux = u % W;
     const int uy = u / W;
-    //cout << "u = " << u << " ux : " << ux << ", uy : " << uy << endl;
     Q.pop();
     // explore neighbors
     for (int i = 0; i < 4; ++i) {
@@ -65,14 +62,11 @@ void GeodesicDistanceMap(const uint8_t* source_mask,
         continue;
       }
       const int v = vy*W + vx;
-      //cout << "v = " << v << " : " << vx << ", " << vy << endl;
       const double w = fabs(height[v] - height[u]);
-      //cout << "dist u : " << dists[u] << endl;
-      //cout << "dist v : " << dists[v] << endl;
-      //cout << "w : " << w << endl;
-      if (dists[u] + w < dists[v]) { // we found a shortest path to v
-        //cout << "!!! shortest" << endl;
+
+      if ((dists[u] + w) < dists[v]) { // we found a shortest path to v
         dists[v] = dists[u] + w;
+        // TODO: should UPDATE existing v (instead of doubling)
         Q.push(make_pair(v, dists[v]));
       }
     }
