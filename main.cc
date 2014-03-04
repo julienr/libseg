@@ -16,6 +16,7 @@
 #include "utils.h"
 #include "kde.h"
 #include "geodesic.h"
+#include "matting.h"
 
 using boost::scoped_ptr;
 using boost::scoped_array;
@@ -96,66 +97,9 @@ void SaveForegroundBackgroundDensities(const uint8_t** channels,
   f.close();
 }
 
-// Computes P(c_x | M) where M is background/foreground estimated by KDE from
-// the mask. c_x is a pixel.
-//
-// outimg should be a user-allocated W*H image
-void ImageColorPDF(const uint8_t** channels,
-                   const uint8_t* mask,
-                   int W,
-                   int H,
-                   double* outimg) {
-  vector<vector<double>> probs(3);
-  for (int i = 0; i < 3; ++i) {
-    ColorChannelKDE(channels[i], mask, W, H, true, &probs[i]);
-  }
-
-  double prob_max = numeric_limits<double>::min();
-  for (int i = 0; i < W*H; ++i) {
-    // The probabilities at a given value are very low (< 0.030), which is
-    // mathematically correct (we have 255 such values and they sum to 1), but
-    // can be problematic numerically. So we scale them by a factor of 10
-    // and then normalize the whole probability image to 0, 1
-    const double prob = 10*probs[0][channels[0][i]]
-                      * 10*probs[1][channels[1][i]]
-                      * 10*probs[2][channels[2][i]];
-    outimg[i] = prob;
-    if (prob > prob_max) {
-      prob_max = prob;
-    }
-  }
-
-  // normalize
-  // TODO: We shouldn't normalize here, because this will result in different
-  // scaling for fg and bg probabilities
-  //for (int i = 0; i < W*H; ++i) {
-    //outimg[i] /= prob_max;
-  //}
-}
-
-// Equation 1. of Bai09 :
-// P_F(cx) = P(cx|F) / (P(cx|F) + P(cx|B))
-//
-// likelihood should be a user-allocated W*H image
-void ForegroundLikelihood(const double* P_cx_F,
-                          const double* P_cx_B,
-                          int W,
-                          int H,
-                          double* likelihood) {
-  for (int i = 0; i < W*H; ++i) {
-    // Avoid division by zero
-    if (P_cx_F[i] == 0 && P_cx_B[i] == 0) {
-      // If P(cx|B) = 0, we have P(cx|F) / (P(cx|F), so set to 1
-      likelihood[i] = 1;
-    } else {
-      likelihood[i] = P_cx_F[i] / (P_cx_F[i] + P_cx_B[i]);
-    }
-  }
-}
-
 int main(int argc, char** argv) {
-  //const string imgname = "GT18";
-  const string imgname = "GT06";
+  const string imgname = "GT18";
+  //const string imgname = "GT06";
 
   // Load input image
   cv::Mat img = cv::imread(
@@ -241,7 +185,6 @@ int main(int argc, char** argv) {
 
   ImageSC<double>(fg_prob_mat, "fg_prob", false);
   ImageSC<double>(bg_prob_mat, "bg_prob", false);
-
 
   // Distance maps
   scoped_array<double> fg_dist(new double[W*H]);

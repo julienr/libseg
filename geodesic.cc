@@ -13,6 +13,36 @@ void GeodesicDistanceMap(const uint8_t* source_mask,
                          const double* height,
                          int W, int H,
                          double* dists) {
+  vector<Point2i> points;
+  for (int x = 0; x < W; ++x) {
+    for (int y = 0; y < H; ++y) {
+      if (source_mask[W*y + x]) {
+        points.push_back(Point2i(x, y));
+      }
+    }
+  }
+  GeodesicDistanceMap(points, height, W, H, dists);
+}
+
+void GeodesicDistanceMap(const std::vector<Scribble>& scribbles,
+                         bool background,
+                         const double* height,
+                         int W, int H,
+                         double* dists) {
+  vector<Point2i> points;
+  for (const Scribble& s : scribbles) {
+    if (s.background == background) {
+      points.insert(points.end(), s.pixels.begin(), s.pixels.end());
+    }
+  }
+  GeodesicDistanceMap(points, height, W, H, dists);
+}
+
+void GeodesicDistanceMap(const std::vector<Point2i>& sources,
+                         const double* height,
+                         int W,
+                         int H,
+                         double* dists) {
   // The algorithm is actually equivalent to running Dijkstra once for each
   // source and then keeping the minimum distance.
   // This is similar to "SHORTEST-PATH FOREST WITH TOPOLOGICAL ORDERING"
@@ -36,12 +66,13 @@ void GeodesicDistanceMap(const uint8_t* source_mask,
   priority_queue<PriorityEntry, vector<PriorityEntry>, decltype(comp)> Q(comp);
 
   for (int i = 0; i < N; ++i) {
-    if (source_mask[i]) {
-      dists[i] = 0;
-      Q.push(make_pair(i, 0));
-    } else {
-      dists[i] = numeric_limits<double>::max();
-    }
+    dists[i] = numeric_limits<double>::max();
+  }
+
+  for (const Point2i& p : sources) {
+    const int i = W*p.y + p.x;
+    dists[i] = 0;
+    Q.push(make_pair(i, 0));
   }
 
   //dx dy pairs for neighborhood exploration
@@ -66,7 +97,7 @@ void GeodesicDistanceMap(const uint8_t* source_mask,
 
       if ((dists[u] + w) < dists[v]) { // we found a shortest path to v
         dists[v] = dists[u] + w;
-        // TODO: should UPDATE existing v (instead of doubling)
+        // TODO: should UPDATE existing v (instead of duplicating)
         Q.push(make_pair(v, dists[v]));
       }
     }

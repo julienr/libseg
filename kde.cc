@@ -107,7 +107,31 @@ void ColorChannelKDE(const uint8_t* data,
       xis.push_back(data[i]);
     }
   }
-  LOG(INFO) << "xis size : " << xis.size();
+
+  ColorChannelKDE(xis, median_filter, target_prob);
+}
+
+void ColorChannelKDE(const uint8_t* data,
+                     const vector<Scribble>& scribbles,
+                     bool background,
+                     int W,
+                     int H,
+                     bool median_filter,
+                     std::vector<double>* target_prob) {
+  vector<double> xis;
+  for (const Scribble& s : scribbles) {
+    if (s.background == background) {
+      for (const Point2i& p : s.pixels) {
+        xis.push_back(data[W*p.y + p.x]);
+      }
+    }
+  }
+  ColorChannelKDE(xis, median_filter, target_prob);
+}
+
+void ColorChannelKDE(const std::vector<double>& xis,
+                     bool median_filter,
+                     std::vector<double>* target_prob) {
   vector<double> weights(xis.size(), 1/(double)xis.size());
   vector<double> targets;
   for (int i = 0; i < 255; ++i) {
@@ -121,4 +145,5 @@ void ColorChannelKDE(const uint8_t* data,
     MedianFilter(*target_prob, 5, &medfilt);
     *target_prob = medfilt;
   }
+
 }

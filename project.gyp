@@ -56,8 +56,10 @@
       'target_name' : 'libmatting',
       'type': 'static_library',
       'sources':[
+        'api.cc',
         'kde.cc',
         'geodesic.cc',
+        'matting.cc',
       ],
       'include_dirs':[
         'third_party/figtree-0.9.3/include/',

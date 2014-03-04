@@ -9,6 +9,8 @@
 #include <cstdint>
 #include <vector>
 
+#include "utils.h"
+
 // Use kernel density estimation to compute the probability of each point
 // int targets (storing the probability in target_prob) given the data points
 // in xis and their corresponding weights
@@ -44,6 +46,20 @@ void ColorChannelKDE(const uint8_t* data,
                      const uint8_t* mask,
                      int W,
                      int H,
+                     bool median_filter,
+                     std::vector<double>* target_prob);
+
+// Same as above, but uses a list of scribbles instead of a mask. Only
+// scribbles with s.background == background are considered.
+void ColorChannelKDE(const uint8_t* data,
+                     const std::vector<Scribble>& scribbles,
+                     bool background,
+                     int W,
+                     int H,
+                     bool median_filter,
+                     std::vector<double>* target_prob);
+
+void ColorChannelKDE(const std::vector<double>& xi,
                      bool median_filter,
                      std::vector<double>* target_prob);
 
