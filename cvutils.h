@@ -21,12 +21,15 @@ void ShowImage(const cv::Mat& img,
 template<class T>
 void ImageSC(const cv::Mat& img,
              const std::string& window_name,
-             bool wait_for_esc=true) {
+             bool wait_for_esc=true,
+             bool verbose=true) {
   using namespace std;
   float Amin = *min_element(img.begin<T>(), img.end<T>());
   float Amax = *max_element(img.begin<T>(), img.end<T>());
-  cout << "[ImageSC " << window_name << "] min = " << Amin
-       << ", max = " << Amax << endl;
+  if (verbose) {
+    cout << "[ImageSC " << window_name << "] min = " << Amin
+         << ", max = " << Amax << endl;
+  }
   cv::Mat A_scaled = (img - Amin)/(Amax - Amin);
   //LOG(INFO) << "A_scaled max : " << *max_element(A_scaled.begin<T>(), A_scaled.end<T>());
   cv::Mat display;

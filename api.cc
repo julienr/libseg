@@ -7,7 +7,7 @@
 using namespace std;
 using boost::scoped_array;
 
-MattingState::MattingState(uint8_t* l, uint8_t* a, uint8_t* b,
+Matter::Matter(uint8_t* l, uint8_t* a, uint8_t* b,
                            int W, int H)
   : W(W), H(H),
     lab_l(new uint8_t[W*H]),
@@ -24,21 +24,27 @@ MattingState::MattingState(uint8_t* l, uint8_t* a, uint8_t* b,
   memcpy(lab_a.get(), a, sizeof(uint8_t)*W*H);
   memcpy(lab_b.get(), b, sizeof(uint8_t)*W*H);
 
+  for (int i = 0; i < W*H; ++i) {
+    final_mask[i] = 0;
+  }
+
   channels[0] = lab_l.get();
   channels[1] = lab_a.get();
   channels[2] = lab_b.get();
 }
 
 
-MattingState::~MattingState() {}
+Matter::~Matter() {}
 
-void MattingState::AddScribble(const Scribble& s) {
+void Matter::AddScribble(const Scribble& s) {
   scribbles.push_back(s);
 
   // 1. Update bg or fg pdf (depending on scribble's background attribute)
   if (s.background) {
+    //cout << "Updating bg pdf" << endl;
     ImageColorPDF(channels, scribbles, true, W, H, bg_pdf.get());
   } else {
+    //cout << "Updating fg pdf" << endl;
     ImageColorPDF(channels, scribbles, false, W, H, fg_pdf.get());
   }
 
@@ -49,6 +55,8 @@ void MattingState::AddScribble(const Scribble& s) {
   // 4. Update fg or bg distance map, but only for pixels within the
   //    fg (if bg scribble) or bg (if fg scribble).
   scoped_array<double> newdist(new double[W*H]);
+  // TODO: There is an issue with the masking here. Not sure what we should do
+  // for the first few scribbles
   if (s.background) {
     GeodesicDistanceMap(scribbles, true, bg_likelihood.get(), W, H,
                         newdist.get());
@@ -63,4 +71,25 @@ void MattingState::AddScribble(const Scribble& s) {
 
   // 5. Compute final mask
   FinalForegroundMask(fg_dist.get(), bg_dist.get(), W, H, final_mask.get());
+}
+
+void Matter::GetForegroundLikelihood(double* out) {
+  memcpy(out, fg_likelihood.get(), sizeof(double)*W*H);
+}
+
+void Matter::GetBackgroundLikelihood(double* out) {
+  memcpy(out, bg_likelihood.get(), sizeof(double)*W*H);
+}
+
+void Matter::GetForegroundDist(double* out) {
+  memcpy(out, fg_dist.get(), sizeof(double)*W*H);
+}
+
+void Matter::GetBackgroundDist(double* out) {
+  memcpy(out, bg_dist.get(), sizeof(double)*W*H);
+}
+
+void Matter::GetForegroundMask(uint8_t* outmask) {
+  memcpy(outmask, final_mask.get(), sizeof(uint8_t)*W*H);
+
 }

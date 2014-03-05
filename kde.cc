@@ -145,5 +145,4 @@ void ColorChannelKDE(const std::vector<double>& xis,
     MedianFilter(*target_prob, 5, &medfilt);
     *target_prob = medfilt;
   }
-
 }

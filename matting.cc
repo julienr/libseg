@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <limits>
+#include <iostream>
 
 #include "kde.h"
 #include "geodesic.h"
@@ -49,6 +50,7 @@ void ImageColorPDF(uint8_t const* const* channels,
     const double prob = 10*probs[0][channels[0][i]]
                       * 10*probs[1][channels[1][i]]
                       * 10*probs[2][channels[2][i]];
+
     outimg[i] = prob;
     if (prob > prob_max) {
       prob_max = prob;

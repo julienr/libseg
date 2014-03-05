@@ -28,7 +28,7 @@ void MaskedCopy(const T* src,
                 const int len,
                 T* dst) {
   for (int i = 0; i < len; ++i) {
-    if (mask[i]) {
+    if (mask[i] == true_val) {
       dst[i] = src[i];
     }
   }
