@@ -76,6 +76,7 @@
       'target_name' : 'main',
       'type' : 'executable',
       'sources':[
+        'cvutils.cc',
         'main.cc',
       ],
       'libraries':[
@@ -89,6 +90,25 @@
         'libmatting',
       ]
     },
+    {
+      'target_name' : 'interactive',
+      'type' : 'executable',
+      'sources':[
+        'cvutils.cc',
+        'interactive.cc',
+      ],
+      'libraries':[
+        '<!@(<(pkg-config) --libs opencv)',
+        '-lglog',
+      ],
+      'cflags':[
+        '<!@(<(pkg-config) --cflags opencv)',
+      ],
+      'dependencies' : [
+        'libmatting',
+      ]
+    },
+
     {
       'target_name' : 'tests',
       'type' : 'executable',
