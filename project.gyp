@@ -5,18 +5,16 @@
 
   'target_defaults': {
     'cflags':[
-      '-Wall', '-Wextra', '-Wno-unused', '-Werror', '-std=c++11',
+      '-Wall', '-Wextra', '-Wno-unused-parameter', '-Werror', '-std=c++11',
       #'-O2',
       '-ggdb'
     ],
     'libraries':[
-      # TODO: Remove dependency on volumit's glog
-      '-L/home/julien/tm/v2/libs/_install/lib',
+      '-L<(ROOTDIR)/third_party/_install/lib',
       '-lglog',
     ],
     'include_dirs':[
-      # TODO: Remove dependency on volumit's glog
-      '/home/julien/tm/v2/libs/_install/include/'
+      '<(ROOTDIR)/third_party/_install/include/'
     ]
   },
 

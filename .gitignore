@@ -1,7 +1,10 @@
 third_party/figtree-0.9.3*
 third_party/gmock-1.7.0*
+third_party/glog-0.3.3*
+third_party/_install
 *.png
 *.txt
 core
 data
 out
+setup.sh
