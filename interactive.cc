@@ -163,6 +163,7 @@ int main(int argc, char** argv) {
 
     ImageSC<uint8_t>(final_mask_mat, "final_mask", false, false);
 
+    result.setTo(0);
     img.copyTo(result, final_mask_mat);
     ShowImage(result, "result", false);
 

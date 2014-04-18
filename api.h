@@ -17,8 +17,8 @@ class Matter {
   ~Matter();
 
   // Note that do not store all scribbles as a simple boolean mask because of
-  // the way user interaction is handled (see Bai09). Basically, scribbles
-  // ordering is important to let user do local corrections that do not influence
+  // the way user interaction is handled (see Bai09). Scribbles ordering is
+  // important to let user do local corrections that do not influence
   // the whole image. In other words, doing the matting with the same set of
   // scribbles but in different order might result in different result.
   void AddScribble(const Scribble& s);
@@ -46,6 +46,9 @@ class Matter {
   boost::scoped_array<double> fg_likelihood, bg_likelihood;
   boost::scoped_array<double> fg_dist, bg_dist;
   boost::scoped_array<uint8_t> final_mask;
+
+  // Initially false, true when at least one scribble has been added to bg/fg
+  bool bg_scribbled_, fg_scribbled_;
 
   uint8_t* channels[3];
 

@@ -4,6 +4,8 @@
 #include "geodesic.h"
 #include "matting.h"
 
+#include <limits>
+
 using namespace std;
 using boost::scoped_array;
 
@@ -19,13 +21,17 @@ Matter::Matter(uint8_t* l, uint8_t* a, uint8_t* b,
     bg_likelihood(new double[W*H]),
     fg_dist(new double[W*H]),
     bg_dist(new double[W*H]),
-    final_mask(new uint8_t[W*H]) {
+    final_mask(new uint8_t[W*H]),
+    bg_scribbled_(false),
+    fg_scribbled_(false) {
   memcpy(lab_l.get(), l, sizeof(uint8_t)*W*H);
   memcpy(lab_a.get(), a, sizeof(uint8_t)*W*H);
   memcpy(lab_b.get(), b, sizeof(uint8_t)*W*H);
 
   for (int i = 0; i < W*H; ++i) {
     final_mask[i] = 0;
+    fg_dist[i] = numeric_limits<double>::max();
+    bg_dist[i] = numeric_limits<double>::max();
   }
 
   channels[0] = lab_l.get();
@@ -55,18 +61,27 @@ void Matter::AddScribble(const Scribble& s) {
   // 4. Update fg or bg distance map, but only for pixels within the
   //    fg (if bg scribble) or bg (if fg scribble).
   scoped_array<double> newdist(new double[W*H]);
-  // TODO: There is an issue with the masking here. Not sure what we should do
-  // for the first few scribbles
   if (s.background) {
     GeodesicDistanceMap(scribbles, true, bg_likelihood.get(), W, H,
                         newdist.get());
-    MaskedCopy<double, uint8_t>(newdist.get(), final_mask.get(), 255,
-                                W*H, bg_dist.get());
+    if (!bg_scribbled_) { // special case for first scribble
+      memcpy(bg_dist.get(), newdist.get(), sizeof(double)*W*H);
+      bg_scribbled_ = true;
+    } else {
+      MaskedCopy<double, uint8_t>(newdist.get(), final_mask.get(), 255,
+                                  W*H, bg_dist.get());
+    }
   } else {
     GeodesicDistanceMap(scribbles, false, fg_likelihood.get(), W, H,
                         newdist.get());
-    MaskedCopy<double, uint8_t>(newdist.get(), final_mask.get(), 0,
-                                W*H, fg_dist.get());
+    if (!fg_scribbled_) { // special case for first scribble
+      memcpy(fg_dist.get(), newdist.get(), sizeof(double)*W*H);
+      fg_scribbled_ = true;
+    } else {
+      MaskedCopy<double, uint8_t>(newdist.get(), final_mask.get(), 0,
+                                  W*H, fg_dist.get());
+
+    }
   }
 
   // 5. Compute final mask
