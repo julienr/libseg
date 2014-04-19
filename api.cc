@@ -58,6 +58,7 @@ void Matter::AddScribble(const Scribble& s) {
   ForegroundLikelihood(fg_pdf.get(), bg_pdf.get(), H, W, fg_likelihood.get());
   ForegroundLikelihood(bg_pdf.get(), fg_pdf.get(), H, W, bg_likelihood.get());
 
+#if 0
   // 4. Update fg or bg distance map, but only for pixels within the
   //    fg (if bg scribble) or bg (if fg scribble).
   scoped_array<double> newdist(new double[W*H]);
@@ -83,6 +84,13 @@ void Matter::AddScribble(const Scribble& s) {
 
     }
   }
+#else
+  // 4. (alternative) Update everything
+  GeodesicDistanceMap(scribbles, true, bg_likelihood.get(), W, H,
+                      bg_dist.get());
+  GeodesicDistanceMap(scribbles, false, fg_likelihood.get(), W, H,
+                      fg_dist.get());
+#endif
 
   // 5. Compute final mask
   FinalForegroundMask(fg_dist.get(), bg_dist.get(), W, H, final_mask.get());

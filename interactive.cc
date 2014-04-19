@@ -170,6 +170,12 @@ int main(int argc, char** argv) {
     const int key = cv::waitKey(1);
     if (key == 27) {
       break;
+    } else if (key == (int)'r') {
+      // TODO: This is not working 100% correctly
+      LOG(INFO) << "Reset";
+      fg_layer.setTo(0);
+      bg_layer.setTo(0);
+      matter.reset(new Matter(lab_l.get(), lab_a.get(), lab_b.get(), W, H));
     }
   }
 }
