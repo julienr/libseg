@@ -79,7 +79,6 @@ static void OnMouse(int event, int x, int y, int, void*) {
       const float nsteps = len / (float)SCRIBLE_RADIUS;
       if (nsteps > 0) {
         const float tstep = 1.0f / nsteps;
-        LOG(INFO) << "nsteps : " << nsteps;
         for (float t = 0; t < 1.0f; t += tstep) {
           const int curr_x = (int)(x_prev + t * d[0]);
           const int curr_y = (int)(y_prev + t * d[1]);

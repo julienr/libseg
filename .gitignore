@@ -8,4 +8,4 @@ third_party/opencv*
 core
 data
 out
-setup.sh
+unix/env.sh

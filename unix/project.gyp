@@ -1,22 +1,22 @@
+# gyp --toplevel-dir option doesn't seem to work as we want when the .gyp
+# file is also out of the source tree.
+# So instead, use SRCDIR environment variable set by gen_ninja.sh to locate
+# source files
 {
   'variables': {
     'pkg-config' : 'pkg-config',
+
   },
 
   'target_defaults': {
     'cflags':[
       '-Wall', '-Wextra', '-Wno-unused-parameter', '-Werror', '-std=c++11',
       '-Wno-unused-variable',
-      '-Wno-unused-private-field',
+      '-Wno-unused-but-set-variable',
       '-O2',
-      #'-ggdb',
-      '-Qunused-arguments',
     ],
-    'libraries':[
-      '-L<(ROOTDIR)/third_party/_install/lib',
-    ],
-    'include_dirs':[
-      '<(ROOTDIR)/third_party/_install/include/'
+    'include_dirs': [
+      '<(INCDIR)',
     ]
   },
 
@@ -26,14 +26,14 @@
       'type': 'static_library',
       'cflags': [],
       'sources': [
-        'third_party/miniglog/glog/logging.cc'
+        '<(SRCDIR)/third_party/miniglog/glog/logging.cc'
       ],
       'include_dirs': [
-        'third_party/miniglog/'
+        '<(SRCDIR)/third_party/miniglog/'
       ],
       'direct_dependent_settings': {
         'include_dirs': [
-          'third_party/miniglog/',
+          '<(SRCDIR)/third_party/miniglog/',
         ],
       }
     },
@@ -72,19 +72,18 @@
       'target_name' : 'libmatting',
       'type': 'static_library',
       'sources':[
-        'api.cc',
-        'kde.cc',
-        'geodesic.cc',
-        'matting.cc',
+        '<(SRCDIR)/api.cc',
+        '<(SRCDIR)/kde.cc',
+        '<(SRCDIR)/geodesic.cc',
+        '<(SRCDIR)/matting.cc',
       ],
       'include_dirs':[
-        'third_party/figtree-0.9.3/include/',
+        '<(FIGTREE)/include/figtree/',
       ],
       'direct_dependent_settings': {
         'libraries': [
-          '-L<(ROOTDIR)/third_party/figtree-0.9.3/lib/',
+          '-L<(FIGTREE)/unix/',
           '-lfigtree',
-          '-lann_figtree_version'
         ]
       },
       'export_dependent_settings': [
@@ -98,8 +97,8 @@
       'target_name' : 'main',
       'type' : 'executable',
       'sources':[
-        'cvutils.cc',
-        'main.cc',
+        '<(SRCDIR)/cvutils.cc',
+        '<(SRCDIR)/main.cc',
       ],
       'libraries':[
         '<!@(<(pkg-config) --libs opencv)',
@@ -115,8 +114,8 @@
       'target_name' : 'interactive',
       'type' : 'executable',
       'sources':[
-        'cvutils.cc',
-        'interactive.cc',
+        '<(SRCDIR)/cvutils.cc',
+        '<(SRCDIR)/interactive.cc',
       ],
       'libraries':[
         '<!@(<(pkg-config) --libs opencv)',
@@ -133,8 +132,8 @@
       'target_name' : 'tests',
       'type' : 'executable',
       'sources':[
-        'kde_test.cc',
-        'geodesic_test.cc',
+        '<(SRCDIR)/kde_test.cc',
+        '<(SRCDIR)/geodesic_test.cc',
       ],
       'dependencies' : [
         'gtest_mock',
