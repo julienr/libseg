@@ -9,3 +9,17 @@ core
 data
 out
 unix/env.sh
+unix/third_party/gmock-1.7.0/Makefile
+unix/third_party/gmock-1.7.0/build-aux/*
+unix/third_party/gmock-1.7.0/config.log
+unix/third_party/gmock-1.7.0/config.status
+unix/third_party/gmock-1.7.0/libtool
+unix/third_party/gmock-1.7.0/scripts/gmock-config
+unix/third_party/gmock-1.7.0/gtest/Makefile
+unix/third_party/gmock-1.7.0/gtest/build-aux/*
+unix/third_party/gmock-1.7.0/gtest/config.log
+unix/third_party/gmock-1.7.0/gtest/config.status
+unix/third_party/gmock-1.7.0/gtest/libtool
+unix/third_party/gmock-1.7.0/gtest/scripts/gtest-config
+unix/third_party/opencv-2.4.8/
+*.deps

@@ -18,6 +18,8 @@ Linux/OSX
 Linux/OSX build files and scripts are under unix/. Gyp (generate your project)
 and ninja are used to build the projects.
 
+Example programs are under unix/samples
+
 Note that the Linux/OSX example programs require OpenCV. libseg itself
 doesn't depend on OpenCV.
 

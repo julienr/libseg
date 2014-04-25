@@ -34,7 +34,7 @@ void UnivariateKDE(const vector<double>& xis,
                    vector<double>* target_prob) {
   CHECK_EQ(xis.size(), weights.size());
   const double h = EstimateBandwidth(xis.size(), 1);
-  LOG(INFO) << "h : " << h;
+  //LOG(INFO) << "h : " << h;
   for (size_t ti = 0; ti < targets.size(); ++ti) {
     double prob = 0;
     for (size_t i = 0; i < xis.size(); ++i) {
@@ -56,7 +56,7 @@ void FastUnivariateKDE(const std::vector<double>& xis,
   // to  exp( -||x_i - y_j||^2 / (2*sigma^2) ).  Thus, if sigma is known,
   // bandwidth can be set to h = sqrt(2)*sigma.
   const double h = sqrt(2) * EstimateBandwidth(xis.size(), 1);
-  LOG(INFO) << "h : " << h;
+  //LOG(INFO) << "h : " << h;
   const int d = 1;
   const int N = xis.size();
   const int M = targets.size();

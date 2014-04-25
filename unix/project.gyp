@@ -97,8 +97,11 @@
       'target_name' : 'main',
       'type' : 'executable',
       'sources':[
-        '<(SRCDIR)/cvutils.cc',
-        '<(SRCDIR)/main.cc',
+        'samples/cvutils.cc',
+        'samples/main.cc',
+      ],
+      'include_dirs': [
+        'samples',
       ],
       'libraries':[
         '<!@(<(pkg-config) --libs opencv)',
@@ -114,8 +117,11 @@
       'target_name' : 'interactive',
       'type' : 'executable',
       'sources':[
-        '<(SRCDIR)/cvutils.cc',
-        '<(SRCDIR)/interactive.cc',
+        'samples/cvutils.cc',
+        'samples/interactive.cc',
+      ],
+      'include_dirs': [
+        'samples',
       ],
       'libraries':[
         '<!@(<(pkg-config) --libs opencv)',
