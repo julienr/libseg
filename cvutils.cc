@@ -16,7 +16,7 @@ void ShowImage(const cv::Mat& img,
                bool wait_for_esc) {
   namedWindow(window_name, CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO
                          | CV_GUI_EXPANDED);
-  resizeWindow(window_name, 640, 480);
+  //resizeWindow(window_name, 640, 480);
   imshow(window_name, img);
   if (wait_for_esc) {
     WaitForEsc();

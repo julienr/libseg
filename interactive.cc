@@ -2,6 +2,8 @@
 
 #include <glog/logging.h>
 
+#include <chrono>
+
 #include <boost/scoped_ptr.hpp>
 #include <boost/scoped_array.hpp>
 
@@ -13,6 +15,7 @@ using boost::scoped_ptr;
 using boost::scoped_array;
 using namespace std;
 using namespace cv;
+using namespace std::chrono;
 
 Mat fg_layer, bg_layer;
 enum DrawMode {
@@ -22,8 +25,35 @@ enum DrawMode {
 DrawMode draw_mode = DRAW_BG;
 bool drawing = false;
 scoped_ptr<Scribble> current_scribble;
-
 scoped_ptr<Matter> matter;
+
+// Used to track cursor movements between two MOUSEMOVE events. For example
+// on OSX, it seems the MOUSEMOVE events have a somewhat important interval
+// between them
+int x_prev = -1, y_prev = -1;
+
+const int SCRIBLE_RADIUS = 5;
+
+static void DrawScribbleCircle(int x, int y) {
+  const int radius = SCRIBLE_RADIUS;
+  const int rr = radius*radius;
+  for (int dx = -radius; dx <=radius; ++dx) {
+    for (int dy = -radius; dy <=radius; ++dy) {
+      if ((dx*dx + dy*dy) <= rr) {
+        current_scribble->pixels.push_back(::Point2i(x + dx, y + dy));
+        if (draw_mode == DRAW_FG) {
+          fg_layer.at<uint8_t>(y + dy, x + dx) = 255;
+        } else {
+          bg_layer.at<uint8_t>(y + dy, x + dx) = 255;
+        }
+      }
+    }
+  }
+}
+
+static float Length(const int* vec) {
+  return sqrt(vec[0]*vec[0] + vec[1]*vec[1]);
+}
 
 static void OnMouse(int event, int x, int y, int, void*) {
   if (event == EVENT_LBUTTONDOWN) {
@@ -31,38 +61,46 @@ static void OnMouse(int event, int x, int y, int, void*) {
     draw_mode = DRAW_FG;
     current_scribble.reset(new Scribble);
     current_scribble->background = false;
+    x_prev = x;
+    y_prev = y;
   } else if (event == EVENT_RBUTTONDOWN) {
     drawing = true;
     draw_mode = DRAW_BG;
     current_scribble.reset(new Scribble);
     current_scribble->background = true;
+    x_prev = x;
+    y_prev = y;
   } else if (event == EVENT_MOUSEMOVE && drawing) {
-    const int radius = 5;
-    const int rr = radius*radius;
-    for (int dx = -radius; dx <=radius; ++dx) {
-      for (int dy = -radius; dy <=radius; ++dy) {
-        if ((dx*dx + dy*dy) <= rr) {
-          current_scribble->pixels.push_back(::Point2i(x + dx, y + dy));
-          if (draw_mode == DRAW_FG) {
-            fg_layer.at<uint8_t>(y + dy, x + dx) = 255;
-          } else {
-            bg_layer.at<uint8_t>(y + dy, x + dx) = 255;
-          }
+    if (x_prev != -1 && y_prev != -1) {
+      // Draw scribbles on a line between (x_prev, y_prev) and (x,y), spaced
+      // by SCRIBBLE_RADIUS
+      const int d[2] = { x - x_prev, y - y_prev };
+      const float len = Length(d);
+      const float nsteps = len / (float)SCRIBLE_RADIUS;
+      if (nsteps > 0) {
+        const float tstep = 1.0f / nsteps;
+        LOG(INFO) << "nsteps : " << nsteps;
+        for (float t = 0; t < 1.0f; t += tstep) {
+          const int curr_x = (int)(x_prev + t * d[0]);
+          const int curr_y = (int)(y_prev + t * d[1]);
+          DrawScribbleCircle(curr_x, curr_y);
         }
       }
+      x_prev = x;
+      y_prev = y;
     }
-    //current_scribble->pixels.
-    //if (draw_mode == DRAW_FG) {
-      //circle(fg_layer, Point(x, y), radius, Scalar::all(255), -1);
-    //} else {
-      //circle(bg_layer, Point(x, y), radius, Scalar::all(255), -1);
-    //}
   } else if (event == EVENT_LBUTTONUP || event == EVENT_RBUTTONUP) {
-    LOG(INFO) << "-- Adding scribble";
-    matter->AddScribble(*current_scribble);
-    LOG(INFO) << "-- done";
+    if (current_scribble->pixels.size() > 0) {
+      LOG(INFO) << "-- Adding scribble";
+      matter->AddScribble(*current_scribble);
+      LOG(INFO) << "-- done";
+    } else {
+      LOG(INFO) << "-- Ignoring empty scribble";
+    }
     current_scribble.reset();
     drawing = false;
+    x_prev = -1;
+    y_prev = -1;
   }
 }
 
@@ -127,6 +165,7 @@ int main(int argc, char** argv) {
   Mat result(img.rows, img.cols, img.type(), Scalar::all(0));
 
   while (true) {
+    auto start = high_resolution_clock::now();
     // http://opencv-python-tutroals.readthedocs.org/en/latest/py_tutorials/py_core/py_image_arithmetics/py_image_arithmetics.html
     // Display scribbles on top of images :
     // - fg scribbles are green
@@ -167,8 +206,12 @@ int main(int argc, char** argv) {
     img.copyTo(result, final_mask_mat);
     ShowImage(result, "result", false);
 
-    const int key = cv::waitKey(1);
-    if (key == 27) {
+    auto end = high_resolution_clock::now();
+    //LOG(INFO) << "time to display : "
+              //<< duration_cast<milliseconds>(end - start).count() / 1000.0;
+    //LOG(INFO) << "waitKey";
+    const int key = cv::waitKey(30);
+    if (key == 27 || key == 'q') {
       break;
     } else if (key == (int)'r') {
       // TODO: This is not working 100% correctly

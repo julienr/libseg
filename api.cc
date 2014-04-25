@@ -4,6 +4,7 @@
 #include "geodesic.h"
 #include "matting.h"
 
+#include <glog/logging.h>
 #include <limits>
 
 using namespace std;
@@ -43,6 +44,10 @@ Matter::Matter(uint8_t* l, uint8_t* a, uint8_t* b,
 Matter::~Matter() {}
 
 void Matter::AddScribble(const Scribble& s) {
+  if (s.pixels.size() == 0) {
+    LOG(WARNING) << "Ignoring empty scribble";
+    return;
+  }
   scribbles.push_back(s);
 
   // 1. Update bg or fg pdf (depending on scribble's background attribute)

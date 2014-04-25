@@ -16,8 +16,11 @@ class Matter {
   Matter(uint8_t* lab_l, uint8_t* lab_a, uint8_t* lab_b, int W, int H);
   ~Matter();
 
-  // Note that do not store all scribbles as a simple boolean mask because of
-  // the way user interaction is handled (see Bai09). Scribbles ordering is
+
+  // Add a scribble. Note that empty scribbles (0 pixels) will be ignored
+  //
+  // Note that we do not store all scribbles as a simple boolean mask because
+  // of the way user interaction is handled (see Bai09). Scribbles ordering is
   // important to let user do local corrections that do not influence
   // the whole image. In other words, doing the matting with the same set of
   // scribbles but in different order might result in different result.
