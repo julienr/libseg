@@ -18,12 +18,3 @@ pushd gmock-1.7.0
 ./configure
 make -j5
 popd
-
-# -- glog
-#wget https://google-glog.googlecode.com/files/glog-0.3.3.tar.gz -O glog-0.3.3.tar.gz
-tar -xvzf glog-0.3.3.tar.gz
-pushd glog-0.3.3
-./configure --prefix=$INSTALLDIR
-make -j5
-make install
-popd

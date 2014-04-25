@@ -6,12 +6,14 @@
   'target_defaults': {
     'cflags':[
       '-Wall', '-Wextra', '-Wno-unused-parameter', '-Werror', '-std=c++11',
-      #'-O2',
-      '-ggdb'
+      '-Wno-unused-variable',
+      '-Wno-unused-private-field',
+      '-O2',
+      #'-ggdb',
+      '-Qunused-arguments',
     ],
     'libraries':[
       '-L<(ROOTDIR)/third_party/_install/lib',
-      '-lglog',
     ],
     'include_dirs':[
       '<(ROOTDIR)/third_party/_install/include/'
@@ -19,6 +21,22 @@
   },
 
   'targets': [
+    {
+      'target_name' : 'miniglog',
+      'type': 'static_library',
+      'cflags': [],
+      'sources': [
+        'third_party/miniglog/glog/logging.cc'
+      ],
+      'include_dirs': [
+        'third_party/miniglog/'
+      ],
+      'direct_dependent_settings': {
+        'include_dirs': [
+          'third_party/miniglog/',
+        ],
+      }
+    },
     {
       # See gmock README
       'target_name' : 'gtest_mock',
@@ -69,6 +87,12 @@
           '-lann_figtree_version'
         ]
       },
+      'export_dependent_settings': [
+        'miniglog',
+      ],
+      'dependencies' : [
+        'miniglog',
+      ]
     },
     {
       'target_name' : 'main',
@@ -79,7 +103,6 @@
       ],
       'libraries':[
         '<!@(<(pkg-config) --libs opencv)',
-        '-lglog',
       ],
       'cflags':[
         '<!@(<(pkg-config) --cflags opencv)',
@@ -97,7 +120,6 @@
       ],
       'libraries':[
         '<!@(<(pkg-config) --libs opencv)',
-        '-lglog',
       ],
       'cflags':[
         '<!@(<(pkg-config) --cflags opencv)',
