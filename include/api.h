@@ -1,7 +1,7 @@
 #ifndef _LIBMATTING_API_H_
 #define _LIBMATTING_API_H_
 
-#include <boost/scoped_array.hpp>
+#include <memory>
 #include <cstdint>
 #include <string.h>
 
@@ -42,13 +42,13 @@ class Matter {
 
  private:
   int W, H;
-  boost::scoped_array<uint8_t> lab_l, lab_a, lab_b;
+  std::unique_ptr<uint8_t[]> lab_l, lab_a, lab_b;
   // TODO: We do not actually need the pdf for each pixel of the image. Use
   // a simple lookup table of pixel intensity to pdf instead
-  boost::scoped_array<double> fg_pdf, bg_pdf;
-  boost::scoped_array<double> fg_likelihood, bg_likelihood;
-  boost::scoped_array<double> fg_dist, bg_dist;
-  boost::scoped_array<uint8_t> final_mask;
+  std::unique_ptr<double[]> fg_pdf, bg_pdf;
+  std::unique_ptr<double[]> fg_likelihood, bg_likelihood;
+  std::unique_ptr<double[]> fg_dist, bg_dist;
+  std::unique_ptr<uint8_t[]> final_mask;
 
   // Initially false, true when at least one scribble has been added to bg/fg
   bool bg_scribbled_, fg_scribbled_;

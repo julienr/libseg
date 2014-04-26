@@ -23,3 +23,21 @@ unix/third_party/gmock-1.7.0/gtest/libtool
 unix/third_party/gmock-1.7.0/gtest/scripts/gtest-config
 unix/third_party/opencv-2.4.8/
 *.deps
+android/bin
+android/gen
+android/libs
+android/obj
+
+# built application files
+*.apk
+*.ap_
+
+# files for the dex VM
+*.dex
+
+# Java class files
+*.class
+
+local.properties
+android/.classpath
+android/.settings

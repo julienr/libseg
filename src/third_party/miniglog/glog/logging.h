@@ -192,8 +192,11 @@ class MessageLogger {
                                        kMaxVerboseLevel) - FATAL;
     int android_log_level = android_log_levels[android_level_index];
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
     // Output the log string the Android log at the appropriate level.
     __android_log_print(android_log_level, tag_.c_str(), stream_.str().c_str());
+#pragma GCC diagnostic pop
 
     // Indicate termination if needed.
     if (severity_ == FATAL) {

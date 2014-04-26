@@ -8,7 +8,6 @@
 #include <limits>
 
 using namespace std;
-using boost::scoped_array;
 
 Matter::Matter(uint8_t* l, uint8_t* a, uint8_t* b,
                            int W, int H)
@@ -66,7 +65,7 @@ void Matter::AddScribble(const Scribble& s) {
 #if 0
   // 4. Update fg or bg distance map, but only for pixels within the
   //    fg (if bg scribble) or bg (if fg scribble).
-  scoped_array<double> newdist(new double[W*H]);
+  unique_ptr<double> newdist(new double[W*H]);
   if (s.background) {
     GeodesicDistanceMap(scribbles, true, bg_likelihood.get(), W, H,
                         newdist.get());
