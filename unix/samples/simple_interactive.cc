@@ -1,4 +1,4 @@
-// InteractiveMatter demo
+// SimpleMatter demo
 #include <iostream>
 
 #include <glog/logging.h>
@@ -19,14 +19,17 @@ using namespace cv;
 using namespace std::chrono;
 
 Mat fg_layer, bg_layer;
+
 enum DrawMode {
   DRAW_BG,
   DRAW_FG
 };
+
 DrawMode draw_mode = DRAW_BG;
 bool drawing = false;
-scoped_ptr<Scribble> current_scribble;
-scoped_ptr<InteractiveMatter> matter;
+scoped_ptr<SimpleMatter> matter;
+
+bool changed = true;
 
 // Used to track cursor movements between two MOUSEMOVE events. For example
 // on OSX, it seems the MOUSEMOVE events have a somewhat important interval
@@ -41,7 +44,6 @@ static void DrawScribbleCircle(int x, int y) {
   for (int dx = -radius; dx <=radius; ++dx) {
     for (int dy = -radius; dy <=radius; ++dy) {
       if ((dx*dx + dy*dy) <= rr) {
-        current_scribble->pixels.push_back(::Point2i(x + dx, y + dy));
         if (draw_mode == DRAW_FG) {
           fg_layer.at<uint8_t>(y + dy, x + dx) = 255;
         } else {
@@ -56,19 +58,25 @@ static float Length(const int* vec) {
   return sqrt(vec[0]*vec[0] + vec[1]*vec[1]);
 }
 
+static void UpdateMatter() {
+  LOG(INFO) << "-- Updating masks";
+  // Opencv uses row-major like libseg
+  CHECK(fg_layer.isContinuous());
+  CHECK(bg_layer.isContinuous());
+  matter->UpdateMasks(fg_layer.ptr<uint8_t>(), bg_layer.ptr<uint8_t>());
+  changed = true;
+  LOG(INFO) << "-- done";
+}
+
 static void OnMouse(int event, int x, int y, int, void*) {
   if (event == EVENT_LBUTTONDOWN) {
     drawing = true;
     draw_mode = DRAW_FG;
-    current_scribble.reset(new Scribble);
-    current_scribble->background = false;
     x_prev = x;
     y_prev = y;
   } else if (event == EVENT_RBUTTONDOWN) {
     drawing = true;
     draw_mode = DRAW_BG;
-    current_scribble.reset(new Scribble);
-    current_scribble->background = true;
     x_prev = x;
     y_prev = y;
   } else if (event == EVENT_MOUSEMOVE && drawing) {
@@ -90,14 +98,7 @@ static void OnMouse(int event, int x, int y, int, void*) {
       y_prev = y;
     }
   } else if (event == EVENT_LBUTTONUP || event == EVENT_RBUTTONUP) {
-    if (current_scribble->pixels.size() > 0) {
-      LOG(INFO) << "-- Adding scribble";
-      matter->AddScribble(*current_scribble);
-      LOG(INFO) << "-- done";
-    } else {
-      LOG(INFO) << "-- Ignoring empty scribble";
-    }
-    current_scribble.reset();
+    UpdateMatter();
     drawing = false;
     x_prev = -1;
     y_prev = -1;
@@ -140,8 +141,8 @@ int main(int argc, char** argv) {
   lab.push_back(cv::Mat(H, W, CV_8U, lab_b.get()));
   cv::split(img_lab, lab);
 
-  matter.reset(new InteractiveMatter(lab_l.get(), lab_a.get(), lab_b.get(),
-                                     W, H));
+  matter.reset(new SimpleMatter(lab_l.get(), lab_a.get(), lab_b.get(),
+                                W, H));
 
   scoped_array<double> fg_likelihood(new double[W*H]);
   cv::Mat fg_likelihood_mat(H, W, CV_64F, fg_likelihood.get());
@@ -160,8 +161,6 @@ int main(int argc, char** argv) {
   scoped_array<uint8_t> final_mask(new uint8_t[W*H]);
   cv::Mat final_mask_mat(H, W, CV_8UC1, final_mask.get());
   final_mask_mat.setTo(0);
-
-  int nscribbles = matter->NumScribbles();
 
   Mat result(img.rows, img.cols, img.type(), Scalar::all(0));
 
@@ -186,14 +185,14 @@ int main(int argc, char** argv) {
     imshow("img", disp_img);
 
     // Refresh images from matter if something has changed
-    if (matter->NumScribbles() != nscribbles) {
+    if (changed) {
       LOG(INFO) << "Refreshing from matter";
       matter->GetForegroundLikelihood(fg_likelihood.get());
       matter->GetBackgroundLikelihood(bg_likelihood.get());
       matter->GetForegroundDist(fg_dist.get());
       matter->GetBackgroundDist(bg_dist.get());
       matter->GetForegroundMask(final_mask.get());
-      nscribbles = matter->NumScribbles();
+      changed = false;
     }
     ImageSC<double>(fg_likelihood_mat, "fg_likelihood", false, false);
     ImageSC<double>(bg_likelihood_mat, "bg_likelihood", false, false);
@@ -215,12 +214,12 @@ int main(int argc, char** argv) {
     if (key == 27 || key == 'q') {
       break;
     } else if (key == (int)'r') {
-      // TODO: This is not working 100% correctly
       LOG(INFO) << "Reset";
       fg_layer.setTo(0);
       bg_layer.setTo(0);
-      matter.reset(new InteractiveMatter(lab_l.get(), lab_a.get(),
-                                         lab_b.get(), W, H));
+      matter.reset(new SimpleMatter(lab_l.get(), lab_a.get(),
+                                    lab_b.get(), W, H));
+      UpdateMatter();
     }
   }
 }

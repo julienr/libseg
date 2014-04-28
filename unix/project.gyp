@@ -13,7 +13,8 @@
       '-Wall', '-Wextra', '-Wno-unused-parameter', '-Werror', '-std=c++11',
       '-Wno-unused-variable',
       '-Wno-unused-but-set-variable',
-      '-O2',
+      #'-O2',
+      '-ggdb',
     ],
     'include_dirs': [
       '<(INCDIR)',
@@ -133,6 +134,27 @@
         'libmatting',
       ]
     },
+    {
+      'target_name' : 'simple_interactive',
+      'type' : 'executable',
+      'sources':[
+        'samples/cvutils.cc',
+        'samples/simple_interactive.cc',
+      ],
+      'include_dirs': [
+        'samples',
+      ],
+      'libraries':[
+        '<!@(<(pkg-config) --libs opencv)',
+      ],
+      'cflags':[
+        '<!@(<(pkg-config) --cflags opencv)',
+      ],
+      'dependencies' : [
+        'libmatting',
+      ]
+    },
+
 
     {
       'target_name' : 'tests',

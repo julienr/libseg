@@ -65,7 +65,7 @@ SimpleMatter::SimpleMatter(uint8_t* l, uint8_t* a, uint8_t* b,
 
 SimpleMatter::~SimpleMatter() {}
 
-void SimpleMatter::SetScribblesMasks(uint8_t* bg_mask, uint8_t* fg_mask) {
+void SimpleMatter::UpdateMasks(uint8_t* bg_mask, uint8_t* fg_mask) {
   // Update PDFs
   ImageColorPDF(channels, bg_mask, W, H, bg_pdf.get());
   ImageColorPDF(channels, fg_mask, W, H, fg_pdf.get());

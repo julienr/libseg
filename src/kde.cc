@@ -49,6 +49,12 @@ void FastUnivariateKDE(const std::vector<double>& xis,
                        const std::vector<double>& targets,
                        std::vector<double>* target_prob,
                        double epsilon) {
+  // libfigtree doesn't like empty xis
+  if (xis.size() == 0) {
+    target_prob->resize(targets.size(), 0);
+    return;
+  }
+
   // Figtree's h is not exactly the same as standard deviation :
   // (from figtree sample.cpp)
   // The bandwidth.  NOTE: this is not the same as standard deviation since

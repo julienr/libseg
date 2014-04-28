@@ -46,7 +46,7 @@ class SimpleMatter : public Matter {
   SimpleMatter(uint8_t* lab_l, uint8_t* lab_a, uint8_t* lab_b, int W, int H);
   virtual ~SimpleMatter();
 
-  void SetScribblesMasks(uint8_t* bg_mask, uint8_t* fg_mask);
+  void UpdateMasks(uint8_t* bg_mask, uint8_t* fg_mask);
 };
 
 // Contains the current state of the matting
