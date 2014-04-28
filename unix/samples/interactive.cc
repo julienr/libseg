@@ -25,7 +25,7 @@ enum DrawMode {
 DrawMode draw_mode = DRAW_BG;
 bool drawing = false;
 scoped_ptr<Scribble> current_scribble;
-scoped_ptr<Matter> matter;
+scoped_ptr<InteractiveMatter> matter;
 
 // Used to track cursor movements between two MOUSEMOVE events. For example
 // on OSX, it seems the MOUSEMOVE events have a somewhat important interval
@@ -139,7 +139,8 @@ int main(int argc, char** argv) {
   lab.push_back(cv::Mat(H, W, CV_8U, lab_b.get()));
   cv::split(img_lab, lab);
 
-  matter.reset(new Matter(lab_l.get(), lab_a.get(), lab_b.get(), W, H));
+  matter.reset(new InteractiveMatter(lab_l.get(), lab_a.get(), lab_b.get(),
+                                     W, H));
 
   scoped_array<double> fg_likelihood(new double[W*H]);
   cv::Mat fg_likelihood_mat(H, W, CV_64F, fg_likelihood.get());
@@ -217,7 +218,8 @@ int main(int argc, char** argv) {
       LOG(INFO) << "Reset";
       fg_layer.setTo(0);
       bg_layer.setTo(0);
-      matter.reset(new Matter(lab_l.get(), lab_a.get(), lab_b.get(), W, H));
+      matter.reset(new InteractiveMatter(lab_l.get(), lab_a.get(),
+                                         lab_b.get(), W, H));
     }
   }
 }
