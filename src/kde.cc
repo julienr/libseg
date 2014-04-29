@@ -11,10 +11,14 @@ using namespace std;
 
 const double NORMAL_FACTOR = 1/(double)sqrt(2*M_PI);
 
-double GaussianKernel(double t, double xi, double h) {
+double GaussianKernel(double t, double xi, double h, bool verbose=false) {
   const double x = (t - xi) / h;
   // TODO: We have to remove NORMAL_FACTOR so that is sums to 1
   // (see plot_densities.py). Is that normal ?
+  if (verbose) {
+    LOG(INFO) << "xi : " << xi << ", t : " << t << ", h : " << h
+              << " => x = " << x << " => x*x = " << x*x;
+  }
 
   //return NORMAL_FACTOR * exp(-0.5 * x * x);
   return exp(-0.5 * x * x);
@@ -25,7 +29,9 @@ double GaussianKernel(double t, double xi, double h) {
 // where n is the number of data points, d the number of dimensions
 // http://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gaussian_kde.html
 double EstimateBandwidth(int ndata, int ndims) {
-  return pow(ndata, -1/(double)(ndims + 4));
+  //return pow(ndata, -1.0/(double)(ndims + 4));
+  // TODO: Hardcoded 0.1 value works better than estimator
+  return 0.1;
 }
 
 void UnivariateKDE(const vector<double>& xis,
@@ -40,6 +46,12 @@ void UnivariateKDE(const vector<double>& xis,
     for (size_t i = 0; i < xis.size(); ++i) {
       prob += weights[i] * GaussianKernel(targets[ti], xis[i], h);
     }
+    //if (prob == 0) {
+      //for (size_t i = 0; i < xis.size(); ++i) {
+        //LOG(INFO) << "i : " << i << ", " << weights[i] << ", "
+                  //<<  GaussianKernel(targets[ti], xis[i], h, true);
+      //}
+    //}
     target_prob->push_back(prob);
   }
 }
@@ -51,7 +63,8 @@ void FastUnivariateKDE(const std::vector<double>& xis,
                        double epsilon) {
   // libfigtree doesn't like empty xis
   if (xis.size() == 0) {
-    target_prob->resize(targets.size(), 0);
+    // Uniform distribution
+    target_prob->resize(targets.size(), 1.0/(double)targets.size());
     return;
   }
 
@@ -62,6 +75,7 @@ void FastUnivariateKDE(const std::vector<double>& xis,
   // to  exp( -||x_i - y_j||^2 / (2*sigma^2) ).  Thus, if sigma is known,
   // bandwidth can be set to h = sqrt(2)*sigma.
   const double h = sqrt(2) * EstimateBandwidth(xis.size(), 1);
+  //const double h = sqrt(2) * 30;
   //LOG(INFO) << "h : " << h;
   const int d = 1;
   const int N = xis.size();
@@ -140,12 +154,24 @@ void ColorChannelKDE(const std::vector<double>& xis,
                      std::vector<double>* target_prob) {
   vector<double> weights(xis.size(), 1/(double)xis.size());
   vector<double> targets;
-  for (int i = 0; i < 255; ++i) {
-    targets.push_back(i);
-  }
-  //UnivariateKDE(xis, weights, targets, target_prob);
-  FastUnivariateKDE(xis, weights, targets, target_prob);
+  //for (int i = 0; i < 255; ++i) {
+    //targets.push_back(i);
+  //}
 
+  // z-score normalize xis and targets to the [-1,1] range
+  // Otherwise, the standard gaussian kernel (e^(-0.5*(x-t)**2)) will blow up
+  // because x-t will be too large
+  vector<double> nx(xis.size(), 0);
+  for (size_t i = 0; i < xis.size(); ++i) {
+    nx[i] = (xis[i] - 128) / 128.0;
+  }
+  for (int i = 0; i < 255; ++i) {
+    targets.push_back((i - 128)/128.0);
+  }
+  //UnivariateKDE(nx, weights, targets, target_prob);
+  FastUnivariateKDE(nx, weights, targets, target_prob);
+
+  // TODO: Median filtering is useless (look at plot_densities)
   if (median_filter) {
     vector<double> medfilt;
     MedianFilter(*target_prob, 5, &medfilt);

@@ -4,6 +4,8 @@
 #include <limits>
 #include <iostream>
 
+#include <glog/logging.h>
+
 #include "kde.h"
 #include "geodesic.h"
 
@@ -47,10 +49,9 @@ void ImageColorPDF(uint8_t const* const* channels,
     // mathematically correct (we have 255 such values and they sum to 1), but
     // can be problematic numerically. So we scale them by a factor of 10
     // TODO: Check that has no other incidence
-    const double prob = 10*probs[0][channels[0][i]]
-                      * 10*probs[1][channels[1][i]]
-                      * 10*probs[2][channels[2][i]];
-
+    const double prob = probs[0][channels[0][i]]
+                      * probs[1][channels[1][i]]
+                      * probs[2][channels[2][i]];
     outimg[i] = prob;
     if (prob > prob_max) {
       prob_max = prob;

@@ -1,2 +1,3 @@
 #!/bin/bash
-LD_LIBRARY_PATH=out/Default/lib:third_party/figtree-0.9.3/lib/:$LD_LIBRARY_PATH valgrind --tool=memcheck --leak-check=yes $@
+LIB_PATH=out/Default/lib:$FIGTREE/unix/:third_party/_install/lib:$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=$LIB_PATH LD_LIBRARY_PATH=$LIB_PATH valgrind --tool=memcheck --leak-check=yes $@

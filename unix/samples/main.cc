@@ -63,31 +63,29 @@ void SaveForegroundBackgroundDensities(const uint8_t** channels,
 }
 
 int main(int argc, char** argv) {
-  const string imgname = "GT18";
-  //const string imgname = "GT06";
+  //const string imgname = "data/alphamatting.com/GT18";
+  //const string imgname = "data/front";
+  const string imgname = "data/cat";
 
   // Load input image
-  cv::Mat img = cv::imread(
-      "data/alphamatting.com/input_training_lowres/" + imgname + ".png",
-      CV_LOAD_IMAGE_COLOR);
+  cv::Mat img = cv::imread(imgname + ".png", CV_LOAD_IMAGE_COLOR);
   CHECK(img.data);
 
   // Load scribbles and binarize them such that pixels drawn by the user
   // have a value of 255
-  cv::Mat scribble_fg = cv::imread(
-      "data/alphamatting.com/" + imgname + "_FG.png",
-      CV_LOAD_IMAGE_GRAYSCALE);
+  cv::Mat scribble_fg = cv::imread(imgname + "_FG.png",
+                                   CV_LOAD_IMAGE_GRAYSCALE);
   CHECK(scribble_fg.data);
   cv::threshold(scribble_fg, scribble_fg, 1, 255, cv::THRESH_BINARY_INV);
 
-  cv::Mat scribble_bg = cv::imread(
-      "data/alphamatting.com/" + imgname + "_BG.png",
-      CV_LOAD_IMAGE_GRAYSCALE);
+  cv::Mat scribble_bg = cv::imread(imgname + "_BG.png",
+                                   CV_LOAD_IMAGE_GRAYSCALE);
   CHECK(scribble_bg.data);
   cv::threshold(scribble_bg, scribble_bg, 1, 255, cv::THRESH_BINARY_INV);
 
   cv::Mat img_lab;
   cv::cvtColor(img, img_lab, CV_BGR2Lab);
+  CHECK_EQ(img_lab.type(), CV_8UC3);
 
   // Split the image channels, getting a direct pointer to memory
   const int W = img.cols;
@@ -122,11 +120,12 @@ int main(int argc, char** argv) {
 
   const uint8_t* channels[3] = {lab_l.get(), lab_a.get(), lab_b.get()};
   // Export densities for plot_densities.py script
-  if (false) {
+  if (true) {
     SaveForegroundBackgroundDensities(channels, fg.get(), bg.get(), W, H,
         false, "densities_nomedfilter.txt");
     SaveForegroundBackgroundDensities(channels, fg.get(), bg.get(), W, H,
         true, "densities_medfilter.txt");
+    LOG(INFO) << "Saved per-channel PDF to .txt";
   }
 
   ShowImage(scribble_fg, "scribble fg", false);
@@ -140,16 +139,23 @@ int main(int argc, char** argv) {
   // the case
   ImageColorPDF(channels, bg.get(), W, H, bg_pdf.get());
 
-  // Foreground/Background likelihood
-  scoped_array<double> fg_prob(new double[W*H]);
-  scoped_array<double> bg_prob(new double[W*H]);
-  cv::Mat fg_prob_mat(H, W, CV_64F, fg_prob.get());
-  cv::Mat bg_prob_mat(H, W, CV_64F, bg_prob.get());
-  ForegroundLikelihood(fg_pdf.get(), bg_pdf.get(), H, W, fg_prob.get());
-  ForegroundLikelihood(bg_pdf.get(), fg_pdf.get(), H, W, bg_prob.get());
+  cv::Mat fg_pdf_mat(H, W, CV_64F, fg_pdf.get());
+  cv::Mat bg_pdf_mat(H, W, CV_64F, bg_pdf.get());
+  ImageSC<double>(fg_pdf_mat, "fg_pdf", false);
+  ImageSC<double>(bg_pdf_mat, "bg_pdf", false);
+  //WaitForEsc();
+  //return EXIT_SUCCESS;
 
-  ImageSC<double>(fg_prob_mat, "fg_prob", false);
-  ImageSC<double>(bg_prob_mat, "bg_prob", false);
+  // Foreground/Background likelihood
+  scoped_array<double> fg_like(new double[W*H]);
+  scoped_array<double> bg_like(new double[W*H]);
+  cv::Mat fg_like_mat(H, W, CV_64F, fg_like.get());
+  cv::Mat bg_like_mat(H, W, CV_64F, bg_like.get());
+  ForegroundLikelihood(fg_pdf.get(), bg_pdf.get(), H, W, fg_like.get());
+  ForegroundLikelihood(bg_pdf.get(), fg_pdf.get(), H, W, bg_like.get());
+
+  ImageSC<double>(fg_like_mat, "fg_likelihood", false);
+  ImageSC<double>(bg_like_mat, "bg_likelihood", false);
 
   // Distance maps
   scoped_array<double> fg_dist(new double[W*H]);
@@ -158,9 +164,9 @@ int main(int argc, char** argv) {
   cv::Mat bg_dist_mat(H, W, CV_64F, bg_dist.get());
   CHECK(scribble_fg.isContinuous());
   CHECK(scribble_bg.isContinuous());
-  GeodesicDistanceMap(scribble_fg.ptr<uint8_t>(0), fg_prob.get(), W, H,
+  GeodesicDistanceMap(scribble_fg.ptr<uint8_t>(0), fg_like.get(), W, H,
                       fg_dist.get());
-  GeodesicDistanceMap(scribble_bg.ptr<uint8_t>(0), bg_prob.get(), W, H,
+  GeodesicDistanceMap(scribble_bg.ptr<uint8_t>(0), bg_like.get(), W, H,
                       bg_dist.get());
   ImageSC<double>(fg_dist_mat, "fg_dist", false);
   ImageSC<double>(bg_dist_mat, "bg_dist", false);
@@ -174,6 +180,7 @@ int main(int argc, char** argv) {
 
   cv::Mat result;
   img.copyTo(result, fgmask);
+  result.setTo(cv::Scalar(255,255,255), ~fgmask);
   ShowImage(result, "result", false);
   ShowImage(img, "image", true);
   return 0;

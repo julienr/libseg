@@ -63,7 +63,7 @@ static void UpdateMatter() {
   // Opencv uses row-major like libseg
   CHECK(fg_layer.isContinuous());
   CHECK(bg_layer.isContinuous());
-  matter->UpdateMasks(fg_layer.ptr<uint8_t>(), bg_layer.ptr<uint8_t>());
+  matter->UpdateMasks(bg_layer.ptr<uint8_t>(), fg_layer.ptr<uint8_t>());
   changed = true;
   LOG(INFO) << "-- done";
 }
@@ -106,11 +106,12 @@ static void OnMouse(int event, int x, int y, int, void*) {
 }
 
 int main(int argc, char** argv) {
-  const string imgname = "GT18";
+  string imgname = "data/default_img.jpg";
+  if (argc > 1) {
+    imgname = argv[1];
+  }
 
-  Mat img = imread(
-    "data/alphamatting.com/input_training_lowres/" + imgname + ".png",
-    CV_LOAD_IMAGE_COLOR);
+  Mat img = imread(imgname, CV_LOAD_IMAGE_COLOR);
   CHECK(img.data);
 
   fg_layer = Mat::zeros(img.rows, img.cols, CV_8UC1);
