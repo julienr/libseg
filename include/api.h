@@ -23,6 +23,9 @@ class Matter {
   void GetForegroundDist(double* out);
   void GetBackgroundDist(double* out);
 
+  int GetWidth() { return W; }
+  int GetHeight() { return H; }
+
  protected:
   int W, H;
   std::unique_ptr<uint8_t[]> lab_l, lab_a, lab_b;

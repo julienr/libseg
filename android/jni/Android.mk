@@ -8,7 +8,7 @@ LOCAL_DEFAULT_CPP_EXTENSION := cc
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../include $(LOCAL_PATH)/../../src/third_party/miniglog/
 LOCAL_CPPFLAGS := -std=c++11
 LOCAL_CFLAGS := -D__GXX_EXPERIMENTAL_CXX0X__
-LOCAL_LDLIBS := -llog
+LOCAL_LDLIBS := -llog -ljnigraphics
 LOCAL_SRC_FILES := libseg.cc \
 									 ../../src/api.cc \
 									 ../../src/geodesic.cc \
