@@ -64,8 +64,8 @@ void SaveForegroundBackgroundDensities(const uint8_t** channels,
 
 int main(int argc, char** argv) {
   //const string imgname = "data/alphamatting.com/GT18";
-  //const string imgname = "data/front";
-  const string imgname = "data/cat";
+  const string imgname = "data/front";
+  //const string imgname = "data/cat";
 
   // Load input image
   cv::Mat img = cv::imread(imgname + ".png", CV_LOAD_IMAGE_COLOR);
@@ -84,6 +84,8 @@ int main(int argc, char** argv) {
   cv::threshold(scribble_bg, scribble_bg, 1, 255, cv::THRESH_BINARY_INV);
 
   cv::Mat img_lab;
+  // TODO: HSV seems to work much better
+  //cv::cvtColor(img, img_lab, CV_BGR2HSV);
   cv::cvtColor(img, img_lab, CV_BGR2Lab);
   CHECK_EQ(img_lab.type(), CV_8UC3);
 
@@ -168,8 +170,16 @@ int main(int argc, char** argv) {
                       fg_dist.get());
   GeodesicDistanceMap(scribble_bg.ptr<uint8_t>(0), bg_like.get(), W, H,
                       bg_dist.get());
-  ImageSC<double>(fg_dist_mat, "fg_dist", false);
-  ImageSC<double>(bg_dist_mat, "bg_dist", false);
+
+  // Show both distance maps with the same range
+  double min1, min2, max1, max2;
+  minMaxIdx(fg_dist_mat, &min1, &max1, NULL, NULL);
+  minMaxIdx(bg_dist_mat, &min2, &max2, NULL, NULL);
+  const double Amin = min(min1, min2);
+  const double Amax = max(max1, max2);
+
+  ImageSC<double>(fg_dist_mat, "fg_dist", false, true, Amin, Amax);
+  ImageSC<double>(bg_dist_mat, "bg_dist", false, true, Amin, Amax);
 
   // Segmentation
   cv::Mat fgmask = fg_dist_mat < bg_dist_mat;
