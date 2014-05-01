@@ -17,6 +17,9 @@ class Matter {
   // 255 indicates foreground pixels, 0 background.
   void GetForegroundMask(uint8_t* mask);
 
+  void GetForegroundProbability(double* out);
+  void GetBackgroundProbability(double* out);
+
   void GetForegroundLikelihood(double* out);
   void GetBackgroundLikelihood(double* out);
 

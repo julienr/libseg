@@ -64,7 +64,8 @@ void FastUnivariateKDE(const std::vector<double>& xis,
   // libfigtree doesn't like empty xis
   if (xis.size() == 0) {
     // Uniform distribution
-    target_prob->resize(targets.size(), 1.0/(double)targets.size());
+    //target_prob->resize(targets.size(), 1.0/(double)targets.size());
+    target_prob->resize(targets.size(), 1.0);
     return;
   }
 

@@ -106,7 +106,8 @@ static void OnMouse(int event, int x, int y, int, void*) {
 }
 
 int main(int argc, char** argv) {
-  string imgname = "data/default_img.jpg";
+  //string imgname = "data/default_img.jpg";
+  string imgname = "data/front.png";
   if (argc > 1) {
     imgname = argv[1];
   }
@@ -132,7 +133,8 @@ int main(int argc, char** argv) {
 
   // RGB -> lab
   cv::Mat img_lab;
-  cv::cvtColor(img, img_lab, CV_BGR2Lab);
+  //cv::cvtColor(img, img_lab, CV_BGR2Lab);
+  cv::cvtColor(img, img_lab, CV_BGR2HSV);
   vector<cv::Mat> lab;
   scoped_array<uint8_t> lab_l(new uint8_t[W*H]);
   lab.push_back(cv::Mat(H, W, CV_8U, lab_l.get()));
@@ -144,6 +146,13 @@ int main(int argc, char** argv) {
 
   matter.reset(new SimpleMatter(lab_l.get(), lab_a.get(), lab_b.get(),
                                 W, H));
+
+  scoped_array<double> fg_prob(new double[W*H]);
+  cv::Mat fg_prob_mat(H, W, CV_64F, fg_prob.get());
+  fg_prob_mat.setTo(0);
+  scoped_array<double> bg_prob(new double[W*H]);
+  cv::Mat bg_prob_mat(H, W, CV_64F, bg_prob.get());
+  bg_prob_mat.setTo(0);
 
   scoped_array<double> fg_likelihood(new double[W*H]);
   cv::Mat fg_likelihood_mat(H, W, CV_64F, fg_likelihood.get());
@@ -188,6 +197,8 @@ int main(int argc, char** argv) {
     // Refresh images from matter if something has changed
     if (changed) {
       LOG(INFO) << "Refreshing from matter";
+      matter->GetForegroundProbability(fg_prob.get());
+      matter->GetBackgroundProbability(bg_prob.get());
       matter->GetForegroundLikelihood(fg_likelihood.get());
       matter->GetBackgroundLikelihood(bg_likelihood.get());
       matter->GetForegroundDist(fg_dist.get());
@@ -195,6 +206,10 @@ int main(int argc, char** argv) {
       matter->GetForegroundMask(final_mask.get());
       changed = false;
     }
+
+    ImageSC<double>(fg_prob_mat, "fg_prob", false, false);
+    ImageSC<double>(bg_prob_mat, "bg_prob", false, false);
+
     ImageSC<double>(fg_likelihood_mat, "fg_likelihood", false, false);
     ImageSC<double>(bg_likelihood_mat, "bg_likelihood", false, false);
 

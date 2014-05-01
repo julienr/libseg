@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string.h>
 #include <unordered_map>
+#include <glog/logging.h>
 
 using namespace std;
 
@@ -84,6 +85,10 @@ void GeodesicDistanceMap(const std::vector<Point2i>& sources,
     int u = Q.top().first;
     const int ux = u % W;
     const int uy = u / W;
+
+    // The check is for debug. It will take too much time for prod
+    //CHECK_EQ(uy*W + ux, u);
+
     Q.pop();
     // explore neighbors
     for (int i = 0; i < 4; ++i) {

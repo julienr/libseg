@@ -38,6 +38,14 @@ Matter::Matter(uint8_t* l, uint8_t* a, uint8_t* b, int W, int H)
 
 Matter::~Matter() {}
 
+void Matter::GetForegroundProbability(double* out) {
+  memcpy(out, fg_pdf.get(), sizeof(double)*W*H);
+}
+
+void Matter::GetBackgroundProbability(double* out) {
+  memcpy(out, bg_pdf.get(), sizeof(double)*W*H);
+}
+
 void Matter::GetForegroundLikelihood(double* out) {
   memcpy(out, fg_likelihood.get(), sizeof(double)*W*H);
 }

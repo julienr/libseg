@@ -13,11 +13,12 @@
       '-Wall', '-Wextra', '-Wno-unused-parameter', '-Werror', '-std=c++11',
       '-Wno-unused-variable',
       '-Wno-unused-but-set-variable',
-      #'-O2',
-      '-ggdb',
+      '-O2',
+      #'-ggdb',
     ],
     'include_dirs': [
       '<(INCDIR)',
+      '<(SRCDIR)/third_party/',
     ]
   },
 
