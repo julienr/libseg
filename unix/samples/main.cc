@@ -79,8 +79,9 @@ void ImageKNNDist(const cv::Mat& img, const cv::Mat& mask,
                   int W, int H, cv::Mat* result) {
   // First, apply KMeans to reduce number of points
   // http://docs.opencv.org/modules/core/doc/clustering.html
-  //vector<vector<double>> points;
-  //vector<vector<double>> centers;
+  vector<vector<double>> points;
+  vector<vector<double>> centers;
+
   typedef vector<vector<double>> DataType;
 
   const int DIM = 3;
@@ -122,10 +123,15 @@ void ImageKNNDist(const cv::Mat& img, const cv::Mat& mask,
       result->at<double>(y, x) = sum_dist;
     }
   }
+  cv::normalize(*result, *result, 0, 1, cv::NORM_MINMAX);
 
   double min, max;
   minMaxIdx(*result, &min, &max, NULL, NULL);
   LOG(INFO) << "result min max : " << min << ", " << max;
+
+  // TODO: This is weird, because we should do 1 - dist to get probability
+  // from distance...
+  //subtract(1.0, *result, *result);
 
 }
 
@@ -252,16 +258,25 @@ int main(int argc, char** argv) {
   ShowImage(scribble_fg, "scribble fg", false);
   ShowImage(scribble_bg, "scribble bg", false);
 
+  // TODO: Implement alternate matting technique where we just look for
+  // the shortest path to a scribble and the distance between two pixels
+  // is given by the euclidean distance (or cosine) between their colors.
+  // This should put a lot of emphasis on scribbles locality, but that's good
+  // because it's usually pretty easy for the user to just draw a scribble
+  // around the person
+
   // Color PDF
   scoped_array<double> fg_pdf(new double[W*H]);
   scoped_array<double> bg_pdf(new double[W*H]);
   cv::Mat fg_pdf_mat(H, W, CV_64F, fg_pdf.get());
   cv::Mat bg_pdf_mat(H, W, CV_64F, bg_pdf.get());
 
-  ImageColorPDF(channels, fg.get(), W, H, fg_pdf.get());
+  //ImageColorPDF(channels, fg.get(), W, H, fg_pdf.get());
+  //ImageColorPDF3(channels, fg.get(), W, H, fg_pdf.get());
   // Caution : at first, it might seem bg_pdf = 1 - fg_pdf, but this is not
   // the case
-  ImageColorPDF(channels, bg.get(), W, H, bg_pdf.get());
+  //ImageColorPDF(channels, bg.get(), W, H, bg_pdf.get());
+  //ImageColorPDF3(channels, bg.get(), W, H, bg_pdf.get());
 
   //{
     //cv::Mat _tmp1 = cv::imread(imgname + "_fg_dist.png", CV_LOAD_IMAGE_GRAYSCALE);
@@ -274,9 +289,8 @@ int main(int argc, char** argv) {
     //cv::Mat _tmp2 = cv::imread(imgname + "_bg_dist.png", CV_LOAD_IMAGE_GRAYSCALE);
     //_tmp2.convertTo(bg_pdf_mat, CV_64F);
   //}
-
-  ImageKNNDist(img_lab, fg_mask, W, H, &fg_pdf_mat);
-  ImageKNNDist(img_lab, bg_mask, W, H, &bg_pdf_mat);
+  ImageKNNDist(img_lab, fg_mask, W, H, &bg_pdf_mat);
+  ImageKNNDist(img_lab, bg_mask, W, H, &fg_pdf_mat);
 
   ImageSC<double>(fg_pdf_mat, "fg_pdf", false);
   ImageSC<double>(bg_pdf_mat, "bg_pdf", false);

@@ -3,6 +3,7 @@
 #include <vector>
 #include <limits>
 #include <iostream>
+#include <memory>
 
 #include <glog/logging.h>
 
@@ -57,6 +58,47 @@ void ImageColorPDF(uint8_t const* const* channels,
       prob_max = prob;
     }
   }
+}
+
+// 3D KDE (instead of per-channel like above)
+void ImageColorPDF3(uint8_t const* const* channels,
+                    const uint8_t* mask,
+                    int W,
+                    int H,
+                    double* outimg) {
+  int N = 0;
+  for (int i = 0; i < W*H; ++i) {
+    N += mask[i] != 0;
+  }
+  unique_ptr<double[]> xis(new double[N*3]);
+  int curr = 0;
+  for (int x = 0; x < W; ++x) {
+    for (int y = 0; y < H; ++y) {
+      const int cidx = y*W + x;
+      if (mask[cidx]) {
+        xis[curr + 0] = channels[0][cidx] / 255.0;
+        xis[curr + 1] = channels[1][cidx] / 255.0;
+        xis[curr + 2] = channels[2][cidx] / 255.0;
+        curr += 3;
+      }
+    }
+  }
+
+  vector<double> weights(N, 1);
+
+  // TODO: Should k-means cluster the image to drastically reduce number of xis
+  unique_ptr<double[]> targets(new double[W*H*3]);
+  for (int x = 0; x < W; ++x) {
+    for (int y = 0; y < H; ++y) {
+      const size_t cidx = y*W + x;
+      const size_t idx = y*3*W + x*3;
+      targets[idx + 0] = channels[0][cidx] / 255.0;
+      targets[idx + 1] = channels[1][cidx] / 255.0;
+      targets[idx + 2] = channels[2][cidx] / 255.0;
+    }
+  }
+
+  FastKDE(3, N, W*H, xis.get(), weights.data(), targets.get(), outimg);
 }
 
 void ForegroundLikelihood(const double* P_cx_F,

@@ -25,6 +25,25 @@ void UnivariateKDE(const std::vector<double>& xis,
                    const std::vector<double>& targets,
                    std::vector<double>* target_prob);
 
+// All matrices are contiguous arrays containing entries in row major format
+// - dim : data dimensionality
+// - N : number of source points
+// - M : number of target points
+// - xis : N x d matrix of N source points in d dimensions
+// - weights : array of N source weights
+// - targets : M x d matrix of N target poitns in d dimensions
+//
+// - target_prob : array of size M. Output probability for each target.
+//                 (assumed to be allocated by the caller)
+void FastKDE(int dim,
+             int N,
+             int M,
+             const double* xis,
+             const double* weights,
+             const double* targets,
+             double* target_prob,
+             double epsilon=1e-2);
+
 // Uses the figtree library to compute fast KDE with the help of the
 // Gauss transform
 // epsilon is the desired maximum absolute error after normalizing output

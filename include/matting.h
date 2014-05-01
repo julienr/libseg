@@ -27,6 +27,12 @@ void ImageColorPDF(uint8_t const* const* channels,
                    int H,
                    double* outimg);
 
+void ImageColorPDF3(uint8_t const* const* channels,
+                    const uint8_t* mask,
+                    int W,
+                    int H,
+                    double* outimg);
+
 
 // Equation 1. of Bai09 :
 // P_F(cx) = P(cx|F) / (P(cx|F) + P(cx|B))

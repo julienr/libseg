@@ -94,6 +94,44 @@ void FastUnivariateKDE(const std::vector<double>& xis,
           target_prob->data());
 }
 
+void FastKDE(int dim,
+             int N,
+             int M,
+             const double* xis,
+             const double* weights,
+             const double* targets,
+             double* target_prob,
+             double epsilon) {
+  // libfigtree doesn't like empty xis
+  if (N == 0) {
+    // Uniform distribution
+    //target_prob->resize(targets.size(), 1.0/(double)targets.size());
+    for (int i = 0; i < M; ++i) {
+      target_prob[i] = 1.0;
+    }
+    return;
+  }
+
+  // Figtree's h is not exactly the same as standard deviation :
+  // (from figtree sample.cpp)
+  // The bandwidth.  NOTE: this is not the same as standard deviation since
+  // the Gauss Transform sums terms exp( -||x_i - y_j||^2 / h^2 ) as opposed
+  // to  exp( -||x_i - y_j||^2 / (2*sigma^2) ).  Thus, if sigma is known,
+  // bandwidth can be set to h = sqrt(2)*sigma.
+  const double h = sqrt(2) * EstimateBandwidth(N, 1);
+
+  const int W = 1;
+
+  figtree(dim, N, M, W,
+          const_cast<double*>(xis),
+          h,
+          const_cast<double*>(weights),
+          const_cast<double*>(targets),
+          epsilon,
+          target_prob);
+}
+
+
 // Return the median of the elements in v. Note that v WILL be modified
 template<class T>
 T Median(vector<T>* v) {
