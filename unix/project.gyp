@@ -116,6 +116,27 @@
       ]
     },
     {
+      'target_name' : 'shortest_main',
+      'type' : 'executable',
+      'sources':[
+        'samples/cvutils.cc',
+        'samples/shortest_main.cc',
+      ],
+      'include_dirs': [
+        'samples',
+      ],
+      'libraries':[
+        '<!@(<(pkg-config) --libs opencv)',
+      ],
+      'cflags':[
+        '<!@(<(pkg-config) --cflags opencv)',
+      ],
+      'dependencies' : [
+        'libmatting',
+      ]
+    },
+
+    {
       'target_name' : 'interactive',
       'type' : 'executable',
       'sources':[

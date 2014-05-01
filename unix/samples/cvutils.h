@@ -37,7 +37,28 @@ void ImageSC(const cv::Mat& img,
     cout << "[ImageSC " << window_name << "] min = " << Amin
          << ", max = " << Amax << endl;
   }
-  cv::Mat A_scaled = (img - Amin)/(Amax - Amin);
+
+  cv::Mat timg(img.rows, img.cols, img.type());
+  for (int i = 0; i < img.rows; ++i) {
+    for (int j = 0; j < img.cols; ++j) {
+      const T v = img.at<T>(i, j);
+      if (v > Amax) {
+        timg.at<T>(i, j) = Amax;
+      } else {
+        timg.at<T>(i, j) = v;
+      }
+    }
+  }
+  //threshold(img, timg, Amax, Amax, cv::THRESH_TRUNC);
+  cv::Mat A_scaled = (timg - Amin)/(Amax - Amin);
+
+  // Cap to Amax
+  //for (int i = 0; i < A.rows; ++i) {
+    //for (int j = 0; j < A.cols; ++j) {
+      //const T v = A.at<T>(i, j);
+      //if (v > (T))
+    //}
+  //}
   //LOG(INFO) << "A_scaled max : " << *max_element(A_scaled.begin<T>(), A_scaled.end<T>());
   cv::Mat display;
   A_scaled.convertTo(display, CV_8UC1, 255.0, 0);

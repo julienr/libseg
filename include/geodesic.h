@@ -29,4 +29,20 @@ void GeodesicDistanceMap(const std::vector<Scribble>& scribbles,
                          int H,
                          double* dists);
 
+// Geodesic distance map with multidimensional heightmap
+// heightmap is a W*H*dim matrix given in row-major format
+void GeodesicDistanceMap(const uint8_t* source_mask,
+                         const double* height,
+                         int dim,
+                         int W,
+                         int H,
+                         double* dists);
+
+void GeodesicDistanceMap(const std::vector<Point2i>& sources,
+                         const double* height,
+                         int dim,
+                         int W,
+                         int H,
+                         double* dists);
+
 #endif
