@@ -111,6 +111,10 @@ int main(int argc, char** argv) {
 
   Mat img = imread(imgname, CV_LOAD_IMAGE_COLOR);
   CHECK(img.data);
+
+  // Denoise
+  medianBlur(img, img, 3);
+
   const int W = img.cols;
   const int H = img.rows;
 
@@ -118,6 +122,9 @@ int main(int argc, char** argv) {
   fg_mask_mat = Mat(H, W, CV_8UC1, fg_mask.get());
   bg_mask.reset(new uint8_t[W*H]);
   bg_mask_mat = Mat(H, W, CV_8UC1, bg_mask.get());
+
+  fg_mask_mat.setTo(0);
+  bg_mask_mat.setTo(0);
 
   namedWindow("img", 0);
   setMouseCallback("img", OnMouse, 0);
@@ -129,7 +136,7 @@ int main(int argc, char** argv) {
   scoped_array<uint8_t> img_lab(new uint8_t[W*H*3]);
   cv::Mat img_lab_mat(H, W, CV_8UC3, img_lab.get());
 
-  //cv::cvtColor(img, img_lab, CV_BGR2Lab);
+  //cv::cvtColor(img, img_lab_mat, CV_BGR2Lab);
   cv::cvtColor(img, img_lab_mat, CV_BGR2HSV);
 
   scoped_array<double> height(new double[W*H*3]);
