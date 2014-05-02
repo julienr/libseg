@@ -61,6 +61,19 @@ static float Length(const int* vec) {
   return sqrt(vec[0]*vec[0] + vec[1]*vec[1]);
 }
 
+static void DoDraw(int x, int y) {
+  // Draw scribbles on a line between (x_prev, y_prev) and (x,y), spaced
+  // by SCRIBBLE_RADIUS
+  const int d[2] = { x - x_prev, y - y_prev };
+  const float len = Length(d);
+  const float nsteps = len / (float)SCRIBLE_RADIUS;
+  const float tstep = (nsteps > 0) ? 1.0f / nsteps : 1.0f ;
+  for (float t = 0; t < 1.0f; t += tstep) {
+    const int curr_x = (int)(x_prev + t * d[0]);
+    const int curr_y = (int)(y_prev + t * d[1]);
+    DrawScribbleCircle(curr_x, curr_y);
+  }
+}
 
 static void OnMouse(int event, int x, int y, int, void*) {
   if (event == EVENT_LBUTTONDOWN) {
@@ -75,23 +88,14 @@ static void OnMouse(int event, int x, int y, int, void*) {
     y_prev = y;
   } else if (event == EVENT_MOUSEMOVE && drawing) {
     if (x_prev != -1 && y_prev != -1) {
-      // Draw scribbles on a line between (x_prev, y_prev) and (x,y), spaced
-      // by SCRIBBLE_RADIUS
-      const int d[2] = { x - x_prev, y - y_prev };
-      const float len = Length(d);
-      const float nsteps = len / (float)SCRIBLE_RADIUS;
-      if (nsteps > 0) {
-        const float tstep = 1.0f / nsteps;
-        for (float t = 0; t < 1.0f; t += tstep) {
-          const int curr_x = (int)(x_prev + t * d[0]);
-          const int curr_y = (int)(y_prev + t * d[1]);
-          DrawScribbleCircle(curr_x, curr_y);
-        }
-      }
+      DoDraw(x, y);
       x_prev = x;
       y_prev = y;
     }
   } else if (event == EVENT_LBUTTONUP || event == EVENT_RBUTTONUP) {
+    if (x_prev != -1 && y_prev != -1) {
+      DoDraw(x, y);
+    }
     changed = true;
     drawing = false;
     x_prev = -1;
