@@ -135,7 +135,26 @@
         'libmatting',
       ]
     },
-
+    {
+      'target_name' : 'shortest_interactive',
+      'type' : 'executable',
+      'sources':[
+        'samples/cvutils.cc',
+        'samples/shortest_interactive.cc',
+      ],
+      'include_dirs': [
+        'samples',
+      ],
+      'libraries':[
+        '<!@(<(pkg-config) --libs opencv)',
+      ],
+      'cflags':[
+        '<!@(<(pkg-config) --cflags opencv)',
+      ],
+      'dependencies' : [
+        'libmatting',
+      ]
+    },
     {
       'target_name' : 'interactive',
       'type' : 'executable',
