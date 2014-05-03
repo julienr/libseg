@@ -10,6 +10,7 @@
 
 #include "cvutils.h"
 
+#include "api.h"
 #include "utils.h"
 #include "kde.h"
 #include "geodesic.h"
@@ -31,7 +32,7 @@ enum DrawMode {
 
 DrawMode draw_mode = DRAW_BG;
 bool drawing = false;
-
+scoped_ptr<ShortestPathMatter> matter;
 bool changed = true;
 
 // Used to track cursor movements between two MOUSEMOVE events. For example
@@ -75,6 +76,13 @@ static void DoDraw(int x, int y) {
   }
 }
 
+static void UpdateMatter() {
+  LOG(INFO) << "-- Updating masks";
+  matter->UpdateMasks(bg_mask.get(), fg_mask.get());
+  changed = true;
+  LOG(INFO) << "-- done";
+}
+
 static void OnMouse(int event, int x, int y, int, void*) {
   if (event == EVENT_LBUTTONDOWN) {
     drawing = true;
@@ -96,7 +104,7 @@ static void OnMouse(int event, int x, int y, int, void*) {
     if (x_prev != -1 && y_prev != -1) {
       DoDraw(x, y);
     }
-    changed = true;
+    UpdateMatter();
     drawing = false;
     x_prev = -1;
     y_prev = -1;
@@ -105,7 +113,9 @@ static void OnMouse(int event, int x, int y, int, void*) {
 
 int main(int argc, char** argv) {
   //string imgname = "data/default_img.jpg";
-  string imgname = "data/front.png";
+  //string imgname = "data/front.png";
+  string imgname = "data/front2.png";
+  //const string imgname = "data/alphamatting.com/GT18";
   if (argc > 1) {
     imgname = argv[1];
   }
@@ -141,12 +151,15 @@ int main(int argc, char** argv) {
   cv::Mat img_lab_mat(H, W, CV_8UC3, img_lab.get());
 
   //cv::cvtColor(img, img_lab_mat, CV_BGR2Lab);
-  cv::cvtColor(img, img_lab_mat, CV_BGR2HSV);
+  //cv::cvtColor(img, img_lab_mat, CV_BGR2HSV);
+  cv::cvtColor(img, img_lab_mat, CV_BGR2RGB);
 
   scoped_array<double> height(new double[W*H*3]);
   cv::Mat height_mat(H, W, CV_64FC3, height.get());
   img_lab_mat.convertTo(height_mat, CV_64FC3);
   cv::normalize(height_mat, height_mat, 0, 1, cv::NORM_MINMAX);
+
+  matter.reset(new ShortestPathMatter(height.get(), 3, W, H));
 
   scoped_array<double> fg_dist(new double[W*H]);
   Mat fg_dist_mat(H, W, CV_64F, fg_dist.get());
@@ -182,10 +195,14 @@ int main(int argc, char** argv) {
     imshow("img", disp_img);
 
     if (changed) {
-      GeodesicDistanceMap(fg_mask.get(), height.get(), 3, W, H, fg_dist.get());
+      LOG(INFO) << "Refreshing from matter";
+      matter->GetForegroundDist(fg_dist.get());
+      matter->GetBackgroundDist(bg_dist.get());
+      matter->GetForegroundMask(final_mask.get());
+      /*GeodesicDistanceMap(fg_mask.get(), height.get(), 3, W, H, fg_dist.get());
       GeodesicDistanceMap(bg_mask.get(), height.get(), 3, W, H, bg_dist.get());
 
-      final_mask_mat = fg_dist_mat < bg_dist_mat;
+      final_mask_mat = fg_dist_mat < bg_dist_mat;*/
       changed = false;
     }
 

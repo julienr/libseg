@@ -9,7 +9,53 @@
 
 using namespace std;
 
-Matter::Matter(uint8_t* l, uint8_t* a, uint8_t* b, int W, int H)
+Matter::~Matter() {}
+
+ShortestPathMatter::ShortestPathMatter(double* height, int dim, int W, int H)
+  : W(W),
+    H(H),
+    dim(dim),
+    height(height),
+    final_mask(new uint8_t[W*H]),
+    fg_dist(new double[W*H]),
+    bg_dist(new double[W*H]) {
+  for (int i = 0; i < W*H; ++i) {
+    final_mask[i] = 0;
+    fg_dist[i] = numeric_limits<double>::max();
+    bg_dist[i] = numeric_limits<double>::max();
+  }
+}
+
+ShortestPathMatter::~ShortestPathMatter() {}
+
+void ShortestPathMatter::GetForegroundDist(double* out) {
+  memcpy(out, fg_dist.get(), sizeof(double)*W*H);
+}
+
+void ShortestPathMatter::GetBackgroundDist(double* out) {
+  memcpy(out, bg_dist.get(), sizeof(double)*W*H);
+}
+
+
+void ShortestPathMatter::GetForegroundMask(uint8_t* mask) {
+  memcpy(mask, final_mask.get(), sizeof(uint8_t)*W*H);
+}
+
+int ShortestPathMatter::GetWidth() {
+  return W;
+}
+
+int ShortestPathMatter::GetHeight() {
+  return H;
+}
+
+void ShortestPathMatter::UpdateMasks(uint8_t* bg_mask, uint8_t* fg_mask) {
+  GeodesicDistanceMap(fg_mask, height, 3, W, H, fg_dist.get());
+  GeodesicDistanceMap(bg_mask, height, 3, W, H, bg_dist.get());
+  FinalForegroundMask(fg_dist.get(), bg_dist.get(), W, H, final_mask.get());
+}
+
+GeodesicMatter::GeodesicMatter(uint8_t* l, uint8_t* a, uint8_t* b, int W, int H)
   : W(W), H(H),
     lab_l(new uint8_t[W*H]),
     lab_a(new uint8_t[W*H]),
@@ -36,39 +82,47 @@ Matter::Matter(uint8_t* l, uint8_t* a, uint8_t* b, int W, int H)
   channels[2] = lab_b.get();
 }
 
-Matter::~Matter() {}
+GeodesicMatter::~GeodesicMatter() {}
 
-void Matter::GetForegroundProbability(double* out) {
+int GeodesicMatter::GetWidth() {
+  return W;
+}
+
+int GeodesicMatter::GetHeight() {
+  return H;
+}
+
+void GeodesicMatter::GetForegroundProbability(double* out) {
   memcpy(out, fg_pdf.get(), sizeof(double)*W*H);
 }
 
-void Matter::GetBackgroundProbability(double* out) {
+void GeodesicMatter::GetBackgroundProbability(double* out) {
   memcpy(out, bg_pdf.get(), sizeof(double)*W*H);
 }
 
-void Matter::GetForegroundLikelihood(double* out) {
+void GeodesicMatter::GetForegroundLikelihood(double* out) {
   memcpy(out, fg_likelihood.get(), sizeof(double)*W*H);
 }
 
-void Matter::GetBackgroundLikelihood(double* out) {
+void GeodesicMatter::GetBackgroundLikelihood(double* out) {
   memcpy(out, bg_likelihood.get(), sizeof(double)*W*H);
 }
 
-void Matter::GetForegroundDist(double* out) {
+void GeodesicMatter::GetForegroundDist(double* out) {
   memcpy(out, fg_dist.get(), sizeof(double)*W*H);
 }
 
-void Matter::GetBackgroundDist(double* out) {
+void GeodesicMatter::GetBackgroundDist(double* out) {
   memcpy(out, bg_dist.get(), sizeof(double)*W*H);
 }
 
-void Matter::GetForegroundMask(uint8_t* outmask) {
+void GeodesicMatter::GetForegroundMask(uint8_t* outmask) {
   memcpy(outmask, final_mask.get(), sizeof(uint8_t)*W*H);
 }
 
 SimpleMatter::SimpleMatter(uint8_t* l, uint8_t* a, uint8_t* b,
                            int W, int H)
-  : Matter(l, a, b, W, H) {
+  : GeodesicMatter(l, a, b, W, H) {
 }
 
 SimpleMatter::~SimpleMatter() {}
@@ -92,7 +146,7 @@ void SimpleMatter::UpdateMasks(uint8_t* bg_mask, uint8_t* fg_mask) {
 
 InteractiveMatter::InteractiveMatter(uint8_t* l, uint8_t* a, uint8_t* b,
                                      int W, int H)
-  : Matter(l, a, b, W, H),
+  : GeodesicMatter(l, a, b, W, H),
     bg_scribbled_(false),
     fg_scribbled_(false) {
 }

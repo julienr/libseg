@@ -192,12 +192,17 @@ void ImageKNNDist(const cv::Mat& img, const cv::Mat& mask,
 
 int main(int argc, char** argv) {
   //const string imgname = "data/alphamatting.com/GT18";
-  const string imgname = "data/front";
+  //const string imgname = "data/front";
   //const string imgname = "data/cat";
+  const string imgname = "data/front2";
+
 
   // Load input image
   cv::Mat img = cv::imread(imgname + ".png", CV_LOAD_IMAGE_COLOR);
   CHECK(img.data);
+
+  // Denoise
+  medianBlur(img, img, 3);
 
   // Load scribbles and binarize them such that pixels drawn by the user
   // have a value of 255
@@ -213,9 +218,9 @@ int main(int argc, char** argv) {
 
   cv::Mat img_lab;
   // TODO: HSV seems to work much better
-  //cv::cvtColor(img, img_lab, CV_BGR2HSV);
+  cv::cvtColor(img, img_lab, CV_BGR2HSV);
   //cv::cvtColor(img, img_lab, CV_BGR2Lab);
-  cv::cvtColor(img, img_lab, CV_BGR2RGB);
+  //cv::cvtColor(img, img_lab, CV_BGR2RGB);
   CHECK_EQ(img_lab.type(), CV_8UC3);
 
   // Split the image channels, getting a direct pointer to memory

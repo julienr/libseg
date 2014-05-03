@@ -113,6 +113,10 @@ int main(int argc, char** argv) {
   Mat img = imread(imgname, CV_LOAD_IMAGE_COLOR);
   CHECK(img.data);
 
+  // Denoise
+  medianBlur(img, img, 3);
+
+
   fg_layer = Mat::zeros(img.rows, img.cols, CV_8UC1);
   bg_layer = Mat::zeros(img.rows, img.cols, CV_8UC1);
 

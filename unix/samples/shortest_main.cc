@@ -32,8 +32,9 @@ using namespace std;
 
 int main(int argc, char** argv) {
   //const string imgname = "data/alphamatting.com/GT18";
-  const string imgname = "data/front";
+  //const string imgname = "data/front";
   //const string imgname = "data/cat";
+  const string imgname = "data/front2";
 
   // Load input image
   cv::Mat img = cv::imread(imgname + ".png", CV_LOAD_IMAGE_COLOR);
@@ -61,9 +62,9 @@ int main(int argc, char** argv) {
   cv::Mat img_lab_mat(H, W, CV_8UC3, img_lab.get());
   // TODO: HSV seems to work much better
   //img.copyTo(img_lab_mat);
-  cv::cvtColor(img, img_lab_mat, CV_BGR2HSV);
+  //cv::cvtColor(img, img_lab_mat, CV_BGR2HSV);
   //cv::cvtColor(img, img_lab_mat, CV_BGR2Lab);
-  //cv::cvtColor(img, img_lab_mat, CV_BGR2RGB);
+  cv::cvtColor(img, img_lab_mat, CV_BGR2RGB);
 
   CHECK_EQ(scribble_fg.cols, W);
   CHECK_EQ(scribble_fg.rows, H);
@@ -76,7 +77,7 @@ int main(int argc, char** argv) {
   cv::normalize(height_mat, height_mat, 0, 1, cv::NORM_MINMAX);
 
   ShowImage(img_lab_mat, "img_lab", false);
-  ImageSC<double>(height_mat, "height_lab", false);
+  ShowImage(height_mat, "height", false);
   //WaitForEsc();
   //return -1;
 
@@ -135,6 +136,8 @@ int main(int argc, char** argv) {
   cv::Mat fgmask = fg_dist_mat < bg_dist_mat;
   CHECK_EQ(fgmask.type(), CV_8U);
   ImageSC<uint8_t>(fgmask, "fgmask", false);
+
+  //cv::imwrite("fgmask.png", fgmask);
 
   //ShowImage(lab[0], "lab[0]", true);
 

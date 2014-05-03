@@ -99,6 +99,7 @@ void GeodesicDistanceMap(const std::vector<Point2i>& sources,
       }
       const int v = vy*W + vx;
       const double w = fabs(height[v] - height[u]);
+      //const double w = 1.0f - height[v];
 
       if ((dists[u] + w) < dists[v]) { // we found a shortest path to v
         dists[v] = dists[u] + w;
@@ -110,7 +111,7 @@ void GeodesicDistanceMap(const std::vector<Point2i>& sources,
 }
 
 inline
-double EuclideanDist(const double* x1, const double* x2, int dim) {
+double SquaredEuclideanDist(const double* x1, const double* x2, int dim) {
   double dist = 0;
   for (int i = 0; i < dim; ++i) {
     const double d = x2[dim] - x1[dim];
@@ -198,9 +199,9 @@ void GeodesicDistanceMap(const std::vector<Point2i>& sources,
         continue;
       }
       const int v = vy*W + vx;
-      const double w = EuclideanDist(&height[vy*W*dim + vx*dim],
-                                     &height[uy*W*dim + ux*dim],
-                                     dim);
+      const double w = SquaredEuclideanDist(&height[vy*W*dim + vx*dim],
+                                            &height[uy*W*dim + ux*dim],
+                                            dim);
       //const double w = fabs(height[v] - height[u]);
 
 

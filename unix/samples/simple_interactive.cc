@@ -134,7 +134,8 @@ int main(int argc, char** argv) {
   // RGB -> lab
   cv::Mat img_lab;
   //cv::cvtColor(img, img_lab, CV_BGR2Lab);
-  cv::cvtColor(img, img_lab, CV_BGR2HSV);
+  //cv::cvtColor(img, img_lab, CV_BGR2HSV);
+  cv::cvtColor(img, img_lab, CV_BGR2RGB);
   vector<cv::Mat> lab;
   scoped_array<uint8_t> lab_l(new uint8_t[W*H]);
   lab.push_back(cv::Mat(H, W, CV_8U, lab_l.get()));
@@ -220,6 +221,7 @@ int main(int argc, char** argv) {
 
     result.setTo(0);
     img.copyTo(result, final_mask_mat);
+    result.setTo(cv::Scalar(255,255,255), ~final_mask_mat);
     ShowImage(result, "result", false);
 
     auto end = high_resolution_clock::now();

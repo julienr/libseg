@@ -7,15 +7,52 @@
 
 #include "utils.h"
 
+
 class Matter {
  public:
-  Matter(uint8_t* lab_l, uint8_t* lab_a,
-         uint8_t* lab_b, int W, int H);
   virtual ~Matter();
 
   // Fill mask with the foreground mask resulting from the matting.
   // 255 indicates foreground pixels, 0 background.
-  void GetForegroundMask(uint8_t* mask);
+  virtual void GetForegroundMask(uint8_t* mask) = 0;
+  virtual int GetWidth() = 0;
+  virtual int GetHeight() = 0;
+};
+
+// Shortest-path matter. Classify each pixel by computing the distance to the
+// nearest scribble. Inter-pixel distance is given by euclidean distance
+// between the two pixels color
+class ShortestPathMatter : public Matter {
+ public:
+  // Height is a W*H*dim matrix given in row-major format
+  ShortestPathMatter(double* height, int dim, int W, int H);
+  virtual ~ShortestPathMatter();
+
+  virtual void GetForegroundMask(uint8_t* mask);
+  virtual int GetWidth();
+  virtual int GetHeight();
+
+  void GetForegroundDist(double* out);
+  void GetBackgroundDist(double* out);
+
+  void UpdateMasks(uint8_t* bg_mask, uint8_t* fg_mask);
+ private:
+  int W, H, dim;
+  double* height;
+  std::unique_ptr<uint8_t[]> final_mask;
+  std::unique_ptr<double[]> fg_dist;
+  std::unique_ptr<double[]> bg_dist;
+};
+
+class GeodesicMatter : public Matter {
+ public:
+  GeodesicMatter(uint8_t* lab_l, uint8_t* lab_a,
+                 uint8_t* lab_b, int W, int H);
+  virtual ~GeodesicMatter();
+
+  // Fill mask with the foreground mask resulting from the matting.
+  // 255 indicates foreground pixels, 0 background.
+  virtual void GetForegroundMask(uint8_t* mask);
 
   void GetForegroundProbability(double* out);
   void GetBackgroundProbability(double* out);
@@ -26,8 +63,8 @@ class Matter {
   void GetForegroundDist(double* out);
   void GetBackgroundDist(double* out);
 
-  int GetWidth() { return W; }
-  int GetHeight() { return H; }
+  virtual int GetWidth();
+  virtual int GetHeight();
 
  protected:
   int W, H;
@@ -44,7 +81,7 @@ class Matter {
 
 // A simpler API that doesn't have the notion of scribbles ordering, but just
 // use one mask for background scribbles and one mask for foreground
-class SimpleMatter : public Matter {
+class SimpleMatter : public GeodesicMatter {
  public:
   // The image is given in the lab colorspace. Each of lab_l, lab_a, lab_b is
   // a W*H array stored in row-major order
@@ -59,7 +96,7 @@ class SimpleMatter : public Matter {
 // This is an API that implements section 3.1.3 of [Bai09] regarding user
 // interaction. Basically, scribbles ordering matters and a new background
 // scribble will only interfer with what's current foreground and inversely.
-class InteractiveMatter : public Matter {
+class InteractiveMatter : public GeodesicMatter {
  public:
   // The image is given in the lab colorspace. Each of lab_l, lab_a, lab_b is
   // a W*H array stored in row-major order
