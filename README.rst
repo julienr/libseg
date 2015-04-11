@@ -1,5 +1,8 @@
 libseg
 ======
+
+This is an *UNFINISHED* implementation and it is still quite buggy.
+
 An interactive image foreground/background segmentation library.
 
 For now, this is an implementation of geodesic matting of [Bai09]. It doesn't
