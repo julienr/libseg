@@ -15,6 +15,9 @@ Its only dependency is the FIGTree library[1]. A version adapted for android
 (and still working on the desktop) is available here :
 TODO: include figtree-android
 
+.. image:: screenshot.png
+  :width: 90%
+
 
 Linux/OSX
 ---------

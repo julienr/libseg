@@ -3,7 +3,6 @@ third_party/gmock-1.7.0*
 third_party/glog-0.3.3*
 third_party/_install
 third_party/opencv*
-*.png
 *.txt
 core
 data
